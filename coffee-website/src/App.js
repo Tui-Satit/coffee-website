@@ -164,6 +164,12 @@ const lineLink = `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
       value={customerName}
       onChange={(e) => setCustomerName(e.target.value)}
     />
+
+     {customerName.trim() === "" && (
+    <p className="name-warning">
+      ⚠️ Please enter your name before ordering
+    </p>
+  )}
   </div>
 
   <div className="order-type">
@@ -214,22 +220,21 @@ const lineLink = `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
     </>
   )}
 </section>
-     
-     
-
-
-
-      <a
-  href={cart.length === 0 ? "#" : lineLink}
+  <a
+  href={cart.length === 0 || customerName.trim() === "" ? "#" : lineLink}
   target="_blank"
   rel="noopener noreferrer"
-  className={`floating-order-btn ${cart.length === 0 ? "disabled" : ""}`}
+  className={`floating-order-btn ${
+    cart.length === 0 || customerName.trim() === "" ? "disabled" : ""
+  }`}
   onClick={(e) => {
-    if (cart.length === 0) e.preventDefault();
+    if (cart.length === 0 || customerName.trim() === "") {
+      e.preventDefault();
+    }
   }}
 >
   💬 Order Now
-</a>
+</a>  
     </div>
   );
 }

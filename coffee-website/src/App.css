@@ -585,3 +585,26 @@ body {
   border-top: 1px solid rgba(255,255,255,0.3);
   font-size: 18px;
 }
+
+@media (max-width: 768px) {
+  .cart-section {
+    padding-bottom: 110px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cart-footer {
+    justify-content: flex-start;
+  }
+
+  .total {
+    font-size: 24px;
+  }
+}
+
+.name-warning {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.9;
+}

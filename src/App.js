@@ -11,7 +11,7 @@ const menuItems = [
 function App() {
   const [cart, setCart] = useState([]);
   const [customerName, setCustomerName] = useState("");
-  const [orderType, setOrderType] = useState("pickup");
+  const [orderType] = useState("pickup");
 
   const addToCart = (item) => {
     setCart((prev) => {

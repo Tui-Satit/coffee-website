@@ -2,14 +2,14 @@ import React, { useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const SHOP_LINE_ID = "@947ozwwk";
-const PICKUP_MESSAGE = "Pickup at shop only";
+const PICKUP_MESSAGE = "รับที่ร้าน";
 
 const menu = [
   {
     id: 1,
     name: "Espresso",
     price: 60,
-    desc: "Strong and bold coffee shot.",
+    desc: "กาแฟช็อตเข้มข้น กลมกล่อม",
     image:
       "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
   },
@@ -17,7 +17,7 @@ const menu = [
     id: 2,
     name: "Latte",
     price: 80,
-    desc: "Smooth espresso with creamy milk.",
+    desc: "เอสเปรสโซผสมนมนุ่มละมุน",
     image:
       "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=1000&q=80",
   },
@@ -25,7 +25,7 @@ const menu = [
     id: 3,
     name: "Cappuccino",
     price: 80,
-    desc: "Rich foam and deep coffee taste.",
+    desc: "ฟองนมนุ่มแน่น พร้อมรสกาแฟชัดเจน",
     image:
       "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80",
   },
@@ -33,7 +33,7 @@ const menu = [
     id: 4,
     name: "Mocha",
     price: 90,
-    desc: "Chocolate coffee for sweet lovers.",
+    desc: "กาแฟช็อกโกแลตหอมหวาน สำหรับสายหวาน",
     image:
       "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&w=1000&q=80",
   },
@@ -41,7 +41,7 @@ const menu = [
     id: 5,
     name: "Americano",
     price: 70,
-    desc: "Clean and classic black coffee.",
+    desc: "กาแฟดำรสคลาสสิก ดื่มง่าย",
     image:
       "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80",
   },
@@ -54,7 +54,7 @@ function App() {
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
   const nameInputRef = useRef(null);
-  const quickNoteOptions = ["Less sweet", "No sugar"];
+  const quickNoteOptions = ["หวานน้อย", "ไม่ใส่น้ำตาล"];
 
 
   const addToCart = (item) => {
@@ -93,32 +93,32 @@ function App() {
   const isOrderReady = Boolean(customerName.trim() && cart.length);
 
   const customerSummaryRows = [
-    { label: "Customer", value: customerName.trim() || "-" },
-    { label: "Service", value: PICKUP_MESSAGE },
-    { label: "Note", value: note.trim() || "-" },
+    { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
+    { label: "บริการ", value: PICKUP_MESSAGE },
+    { label: "หมายเหตุ", value: note.trim() || "-" },
   ];
 
   const orderSummaryRows = [
-    { label: "Subtotal", value: `฿${subtotal}` },
-    { label: "Total Items", value: totalItems },
+    { label: "ยอดรวมย่อย", value: `฿${subtotal}` },
+    { label: "จำนวนรายการ", value: totalItems },
   ];
 
   const createLineOrderLink = () => {
     if (cart.length === 0) {
-      alert("Please add coffee first.");
+      alert("กรุณาเลือกเมนูก่อน");
       return "#";
     }
 
     const orderText = [
-      "☕ New Coffee Order",
+      "☕ ออเดอร์กาแฟใหม่",
       "",
       ...customerSummaryRows.map((row) => `${row.label}: ${row.value}`),
       "",
-      "Items:",
+      "รายการ:",
       ...cart.map((item) => `- ${item.name} x${item.qty} = ฿${item.price * item.qty}`),
       "",
       ...orderSummaryRows.map((row) => `${row.label}: ${row.value}`),
-      `Total Price: ฿${totalPrice}`,
+      `ยอดรวม: ฿${totalPrice}`,
     ].join("\n");
 
     return `https://line.me/R/oaMessage/${encodeURIComponent(
@@ -128,7 +128,7 @@ function App() {
 
   const handleOrderWithLine = () => {
     if (!customerName.trim()) {
-      setNameError("Fill in your name to order.");
+      setNameError("กรุณากรอกชื่อ");
       nameInputRef.current?.focus();
       return;
     }
@@ -155,17 +155,17 @@ function App() {
   return (
     <div className="app">
       <header className="shop-sticky-header">
-        <div className="shop-pill">TUI COFFEE SHOP</div>
+            <div className="shop-pill">ร้านกาแฟตุ้ย</div>
       </header>
 
       <div className="bg-blur bg-blur-1"></div>
       <div className="bg-blur bg-blur-2"></div>
 
       <section className="hero">
-        <p className="hero-badge">Minimal Coffee Store</p>
-        <h1>Coffee Menu</h1>
+        <p className="hero-badge">ร้านกาแฟมินิมอล</p>
+        <h1>เมนูกาแฟ</h1>
         <p className="hero-text">
-          Clean menu, quick ordering, pickup at shop.
+          เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที
         </p>
       </section>
 
@@ -185,11 +185,11 @@ function App() {
 
                 <div className="menu-footer">
                   <div className="price-block">
-                    <span className="price-label">PRICE</span>
+                    <span className="price-label">ราคา</span>
                     <strong>฿{item.price}</strong>
                   </div>
                   <button className="add-btn" onClick={() => addToCart(item)}>
-                    + Add
+                    + เพิ่มลงตะกร้า
                   </button>
                 </div>
               </div>
@@ -201,8 +201,8 @@ function App() {
       {totalItems > 0 && (
         <button className="cart-bar" onClick={() => setCartOpen(true)}>
           <div className="cart-bar-left">
-            <strong>{totalItems} items</strong>
-            <span>Tap to view your order</span>
+            <strong>{totalItems} รายการ</strong>
+            <span>แตะเพื่อดูออเดอร์ของคุณ</span>
           </div>
           <div className="cart-bar-price">฿{totalPrice}</div>
         </button>
@@ -217,8 +217,8 @@ function App() {
 
         <div className="drawer-header">
           <div>
-            <h2>Your Order</h2>
-            <p>{totalItems} items selected</p>
+            <h2>ออเดอร์ของคุณ</h2>
+            <p>{totalItems} รายการ</p>
           </div>
           <button className="close-btn" onClick={() => setCartOpen(false)}>
             ✕
@@ -226,15 +226,15 @@ function App() {
         </div>
 
         <div className="form-card">
-          <h3 className="card-title">Order Details</h3>
+          <h3 className="card-title">รายละเอียดการสั่งซื้อ</h3>
           <p className="pickup-pill">{PICKUP_MESSAGE}</p>
 
           <label className="field">
-            <span>Customer Name</span>
+            <span>ชื่อลูกค้า</span>
             <input
               ref={nameInputRef}
               type="text"
-              placeholder="Your name"
+              placeholder="กรอกชื่อของคุณ"
               value={customerName}
               onChange={(e) => {
                 setCustomerName(e.target.value);
@@ -243,15 +243,15 @@ function App() {
               className={nameError ? "error-input" : ""}
             />
             {nameError && <p className="error-text">{nameError}</p>}
-            <p className="field-hint">* Please fill your name before ordering.</p>
+            <p className="field-hint">* กรุณากรอกชื่อก่อนส่งออเดอร์</p>
           </label>
 
 
           <label className="field">
-            <span>Note to Shop</span>
+            <span>หมายเหตุถึงร้าน</span>
             <textarea
               rows="3"
-              placeholder="Less sweet, no sugar, extra hot..."
+              placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล ร้อนพิเศษ..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -277,7 +277,7 @@ function App() {
                 <img src={item.image} alt={item.name} className="drawer-thumb" />
                 <div>
                   <h4>{item.name}</h4>
-                  <p>฿{item.price} each</p>
+                  <p>฿{item.price} / แก้ว</p>
                 </div>
               </div>
 
@@ -291,7 +291,7 @@ function App() {
         </div>
 
         <div className="summary-card">
-          <h3 className="card-title">Order Summary</h3>
+          <h3 className="card-title">สรุปออเดอร์</h3>
 
           <div className="summary-subcard">
             {customerSummaryRows.map((row) => (
@@ -305,13 +305,13 @@ function App() {
           <div className="summary-subcard">
             {orderSummaryRows.map((row) => (
               <div key={row.label} className="summary-row">
-                <span>{row.label}</span>
-                <span>{row.value}</span>
-              </div>
-            ))}
+              <span>{row.label}</span>
+              <span>{row.value}</span>
+            </div>
+          ))}
             <hr />
             <div className="summary-total">
-              <span>Total Price</span>
+              <span>ยอดรวม</span>
               <span>฿{totalPrice}</span>
             </div>
           </div>
@@ -322,7 +322,7 @@ function App() {
           onClick={handleOrderWithLine}
           disabled={!isOrderReady}
         >
-          Order with LINE
+          ส่งออเดอร์ผ่าน LINE
         </button>
       </section>
     </div>

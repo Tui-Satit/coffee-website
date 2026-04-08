@@ -3,6 +3,7 @@ import "./App.css";
 
 const SHOP_LINE_ID = "@947ozwwk";
 const PICKUP_MESSAGE = "รับที่ร้าน";
+const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 
 const menu = [
   {
@@ -49,6 +50,9 @@ const menu = [
 
 function App() {
   const [cart, setCart] = useState([]);
+  const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
+    menu.reduce((acc, item) => ({ ...acc, [item.id]: SUGAR_OPTIONS[0] }), {})
+  );
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
@@ -56,24 +60,31 @@ function App() {
   const nameInputRef = useRef(null);
   const quickNoteOptions = ["หวานน้อย", "ไม่ใส่น้ำตาล"];
 
-
   const addToCart = (item) => {
+    const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
+    if (!sugar) {
+      alert("กรุณาเลือกระดับความหวานก่อนเพิ่มลงตะกร้า");
+      return;
+    }
+
     setCart((prev) => {
-      const found = prev.find((p) => p.id === item.id);
+      const found = prev.find((p) => p.id === item.id && p.sugar === sugar);
       if (found) {
         return prev.map((p) =>
-          p.id === item.id ? { ...p, qty: p.qty + 1 } : p
+          p.id === item.id && p.sugar === sugar ? { ...p, qty: p.qty + 1 } : p
         );
       }
-      return [...prev, { ...item, qty: 1 }];
+      return [...prev, { ...item, qty: 1, sugar }];
     });
   };
 
-  const updateQty = (id, change) => {
+  const updateQty = (id, sugar, change) => {
     setCart((prev) =>
       prev
         .map((item) =>
-          item.id === id ? { ...item, qty: Math.max(0, item.qty + change) } : item
+          item.id === id && item.sugar === sugar
+            ? { ...item, qty: Math.max(0, item.qty + change) }
+            : item
         )
         .filter((item) => item.qty > 0)
     );
@@ -115,7 +126,10 @@ function App() {
       ...customerSummaryRows.map((row) => `${row.label}: ${row.value}`),
       "",
       "รายการ:",
-      ...cart.map((item) => `- ${item.name} x${item.qty} = ฿${item.price * item.qty}`),
+      ...cart.map(
+        (item) =>
+          `- ${item.name} (${item.sugar}) x${item.qty} = ฿${item.price * item.qty}`
+      ),
       "",
       ...orderSummaryRows.map((row) => `${row.label}: ${row.value}`),
       `ยอดรวม: ฿${totalPrice}`,
@@ -182,6 +196,25 @@ function App() {
                   <h3>{item.name}</h3>
                   <p className="menu-desc">{item.desc}</p>
                 </div>
+
+                <label className="sugar-field">
+                  <span>ระดับความหวาน</span>
+                  <select
+                    value={selectedSugarByItem[item.id] || SUGAR_OPTIONS[0]}
+                    onChange={(e) =>
+                      setSelectedSugarByItem((prev) => ({
+                        ...prev,
+                        [item.id]: e.target.value,
+                      }))
+                    }
+                  >
+                    {SUGAR_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
                 <div className="menu-footer">
                   <div className="price-block">
@@ -272,19 +305,21 @@ function App() {
 
         <div className="drawer-items">
           {cart.map((item) => (
-            <div className="drawer-item" key={item.id}>
+            <div className="drawer-item" key={`${item.id}-${item.sugar}`}>
               <div className="drawer-item-left">
                 <img src={item.image} alt={item.name} className="drawer-thumb" />
                 <div>
-                  <h4>{item.name}</h4>
+                  <h4>
+                    {item.name} ({item.sugar}) x{item.qty}
+                  </h4>
                   <p>฿{item.price} / แก้ว</p>
                 </div>
               </div>
 
               <div className="qty-box">
-                <button onClick={() => updateQty(item.id, -1)}>-</button>
+                <button onClick={() => updateQty(item.id, item.sugar, -1)}>-</button>
                 <span>{item.qty}</span>
-                <button onClick={() => updateQty(item.id, 1)}>+</button>
+                <button onClick={() => updateQty(item.id, item.sugar, 1)}>+</button>
               </div>
             </div>
           ))}

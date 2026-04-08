@@ -1,60 +1,65 @@
 import React, { useMemo, useRef, useState } from "react";
 import "./App.css";
 
-function App() {
-  const SHOP_LINE_ID = "@947ozwwk";
-  
-  const menu = [
-    {
-      id: 1,
-      name: "Espresso",
-      price: 60,
-      desc: "Strong and bold coffee shot.",
-      image:
-        "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-      id: 2,
-      name: "Latte",
-      price: 80,
-      desc: "Smooth espresso with creamy milk.",
-      image:
-        "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-      id: 3,
-      name: "Cappuccino",
-      price: 80,
-      desc: "Rich foam and deep coffee taste.",
-      image:
-        "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-      id: 4,
-      name: "Mocha",
-      price: 90,
-      desc: "Chocolate coffee for sweet lovers.",
-      image:
-        "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&w=1000&q=80",
-    },
-    {
-      id: 5,
-      name: "Americano",
-      price: 70,
-      desc: "Clean and classic black coffee.",
-      image:
-        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80",
-    },
-  ];
+const SHOP_LINE_ID = "@947ozwwk";
+const PICKUP_MESSAGE = "Pickup at shop only";
 
+const menu = [
+  {
+    id: 1,
+    name: "Espresso",
+    price: 60,
+    desc: "Strong and bold coffee shot.",
+    image:
+      "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: 2,
+    name: "Latte",
+    price: 80,
+    desc: "Smooth espresso with creamy milk.",
+    image:
+      "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: 3,
+    name: "Cappuccino",
+    price: 80,
+    desc: "Rich foam and deep coffee taste.",
+    image:
+      "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: 4,
+    name: "Mocha",
+    price: 90,
+    desc: "Chocolate coffee for sweet lovers.",
+    image:
+      "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&w=1000&q=80",
+  },
+  {
+    id: 5,
+    name: "Americano",
+    price: 70,
+    desc: "Clean and classic black coffee.",
+    image:
+      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80",
+  },
+];
+
+function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [orderType, setOrderType] = useState("pickup");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+
   const nameInputRef = useRef(null);
-  
+  const phoneInputRef = useRef(null);
+
+
   const addToCart = (item) => {
     setCart((prev) => {
       const found = prev.find((p) => p.id === item.id);
@@ -87,71 +92,82 @@ function App() {
     [cart]
   );
 
-  const deliveryFee = orderType === "delivery" && totalItems > 0 ? 30 : 0;
-  const totalPrice = subtotal + deliveryFee;
+  const totalPrice = subtotal;
+  const isOrderReady = Boolean(customerName.trim() && phoneNumber.trim() && cart.length);
 
-  // ฟังก์ชันสำหรับสร้างลิงก์สั่งซื้อผ่าน LINE
+  const customerSummaryRows = [
+    { label: "Customer", value: customerName.trim() || "-" },
+    { label: "Phone", value: phoneNumber.trim() || "-" },
+    { label: "Service", value: PICKUP_MESSAGE },
+    { label: "Note", value: note.trim() || "-" },
+  ];
+
+  const orderSummaryRows = [
+    { label: "Subtotal", value: `฿${subtotal}` },
+    { label: "Total Items", value: totalItems },
+  ];
 
   const createLineOrderLink = () => {
-  if (cart.length === 0) {
-    alert("Please add coffee first.");
-    return "#";
-  }
+    if (cart.length === 0) {
+      alert("Please add coffee first.");
+      return "#";
+    }
 
-  const orderText = [
-    "☕ New Coffee Order",
-    "",
-    `Name: ${customerName || "-"}`,
-    `Order Type: ${orderType === "pickup" ? "Pickup" : "Delivery"}`,
-    `Note: ${note || "-"}`,
-    "",
-    "Items:",
-    ...cart.map(
-      (item) => `- ${item.name} x${item.qty} = ฿${item.price * item.qty}`
-    ),
-    "",
-    `Subtotal: ฿${subtotal}`,
-    `Delivery Fee: ฿${deliveryFee}`,
-    `Total Items: ${totalItems}`,
-    `Total Price: ฿${totalPrice}`,
-  ].join("\n");
+    const orderText = [
+      "☕ New Coffee Order",
+      "",
+      ...customerSummaryRows.map((row) => `${row.label}: ${row.value}`),
+      "",
+      "Items:",
+      ...cart.map((item) => `- ${item.name} x${item.qty} = ฿${item.price * item.qty}`),
+      "",
+      ...orderSummaryRows.map((row) => `${row.label}: ${row.value}`),
+      `Total Price: ฿${totalPrice}`,
+    ].join("\n");
 
-  return `https://line.me/R/oaMessage/${encodeURIComponent(
-    SHOP_LINE_ID
-  )}/?${encodeURIComponent(orderText)}`;
-};
+    return `https://line.me/R/oaMessage/${encodeURIComponent(
+      SHOP_LINE_ID
+    )}/?${encodeURIComponent(orderText)}`;
+  };
 
-  // ฟังก์ชันสำหรับจัดการการสั่งซื้อผ่าน LINE
+  const handleOrderWithLine = () => {
+    if (!customerName.trim()) {
+      setNameError("Fill in your name to order.");
+      nameInputRef.current?.focus();
+      return;
+    }
 
- const handleOrderWithLine = () => {
-  if (!customerName.trim()) {
-    setNameError("Fill in your name to order.");
+    if (!phoneNumber.trim()) {
+      setPhoneError("Fill in your phone number to order.");
+      phoneInputRef.current?.focus();
+      return;
+    }
 
-    
-    nameInputRef.current?.focus();
-    return;
-  }
+    setNameError("");
+    setPhoneError("");
 
-  setNameError("");
+    const lineUrl = createLineOrderLink();
+    if (lineUrl === "#") return;
 
-  const lineUrl = createLineOrderLink();
-  if (lineUrl === "#") return;
-
-  window.location.href = lineUrl;
-};
+    window.location.href = lineUrl;
+  };
 
   return (
     <div className="app">
+      <header className="shop-sticky-header">
+        <div className="shop-pill">Tui Cafe</div>
+      </header>
+
       <div className="bg-blur bg-blur-1"></div>
       <div className="bg-blur bg-blur-2"></div>
 
-      <header className="hero">
+      <section className="hero">
         <p className="hero-badge">Premium Coffee</p>
         <h1>Coffee Menu</h1>
         <p className="hero-text">
           Fresh coffee, simple ordering, and smooth mobile experience.
         </p>
-      </header>
+      </section>
 
       <main className="menu-section">
         <div className="menu-grid">
@@ -210,41 +226,40 @@ function App() {
         </div>
 
         <div className="form-card">
-        <label className="field">
-  <span>Customer Name</span>
-  <input
-    ref={nameInputRef}
-    type="text"
-    placeholder="Your name"
-    value={customerName}
-    onChange={(e) => {
-      setCustomerName(e.target.value);
-      if (e.target.value.trim()) {
-        setNameError("");
-      }
-    }}
-    className={nameError ? "error-input" : ""}
-  />
-  {nameError && <p className="error-text">{nameError}</p>}
-</label>
+          <h3 className="card-title">Order Details</h3>
+          <p className="pickup-pill">{PICKUP_MESSAGE}</p>
 
-          <div className="field">
-            <span>Order Type</span>
-            <div className="type-switch">
-              <button
-                className={orderType === "pickup" ? "active" : ""}
-                onClick={() => setOrderType("pickup")}
-              >
-                Pickup
-              </button>
-              <button
-                className={orderType === "delivery" ? "active" : ""}
-                onClick={() => setOrderType("delivery")}
-              >
-                Delivery
-              </button>
-            </div>
-          </div>
+          <label className="field">
+            <span>Customer Name</span>
+            <input
+              ref={nameInputRef}
+              type="text"
+              placeholder="Your name"
+              value={customerName}
+              onChange={(e) => {
+                setCustomerName(e.target.value);
+                if (e.target.value.trim()) setNameError("");
+              }}
+              className={nameError ? "error-input" : ""}
+            />
+            {nameError && <p className="error-text">{nameError}</p>}
+          </label>
+
+          <label className="field">
+            <span>Phone Number</span>
+            <input
+              ref={phoneInputRef}
+              type="tel"
+              placeholder="08x-xxx-xxxx"
+              value={phoneNumber}
+              onChange={(e) => {
+                setPhoneNumber(e.target.value);
+                if (e.target.value.trim()) setPhoneError("");
+              }}
+              className={phoneError ? "error-input" : ""}
+            />
+            {phoneError && <p className="error-text">{phoneError}</p>}
+          </label>
 
           <label className="field">
             <span>Note to Shop</span>
@@ -278,22 +293,39 @@ function App() {
         </div>
 
         <div className="summary-card">
-          <div><span>Subtotal</span><span>฿{subtotal}</span></div>
-          <div><span>Delivery Fee</span><span>฿{deliveryFee}</span></div>
-          <div><span>Total Items</span><span>{totalItems}</span></div>
-          <hr />
-          <div className="summary-total">
-            <span>Total Price</span>
-            <span>฿{totalPrice}</span>
+          <h3 className="card-title">Order Summary</h3>
+
+          <div className="summary-subcard">
+            {customerSummaryRows.map((row) => (
+              <div key={row.label} className="summary-row">
+                <span>{row.label}</span>
+                <span>{row.value}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="summary-subcard">
+            {orderSummaryRows.map((row) => (
+              <div key={row.label} className="summary-row">
+                <span>{row.label}</span>
+                <span>{row.value}</span>
+              </div>
+            ))}
+            <hr />
+            <div className="summary-total">
+              <span>Total Price</span>
+              <span>฿{totalPrice}</span>
+            </div>
           </div>
         </div>
-              
-             
-       <button className="line-order-btn" onClick={handleOrderWithLine}>
-  Order with LINE
-</button>
 
-        
+        <button
+          className="line-order-btn"
+          onClick={handleOrderWithLine}
+          disabled={!isOrderReady}
+        >
+          Order with LINE
+        </button>
       </section>
     </div>
   );

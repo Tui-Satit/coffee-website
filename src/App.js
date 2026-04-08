@@ -157,7 +157,7 @@ function App() {
   return (
     <div className="app">
       <header className="shop-sticky-header">
-            <div className="shop-pill">ร้านกาแฟตุ้ย</div>
+            <div className="shop-pill">กาแฟคุณตุ่ย</div>
       </header>
 
       <div className="bg-blur bg-blur-1"></div>

@@ -58,7 +58,6 @@ function App() {
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
   const nameInputRef = useRef(null);
-  const quickNoteOptions = ["หวานน้อย", "ไม่ใส่น้ำตาล"];
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
@@ -153,17 +152,6 @@ function App() {
     if (lineUrl === "#") return;
 
     window.location.href = lineUrl;
-  };
-
-  const applyQuickNote = (quickNote) => {
-    setNote((prev) => {
-      const trimmedPrev = prev.trim();
-      if (!trimmedPrev) return quickNote;
-      if (trimmedPrev.toLowerCase().includes(quickNote.toLowerCase())) {
-        return prev;
-      }
-      return `${trimmedPrev}, ${quickNote}`;
-    });
   };
 
   return (
@@ -284,22 +272,10 @@ function App() {
             <span>หมายเหตุถึงร้าน</span>
             <textarea
               rows="3"
-              placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล ร้อนพิเศษ..."
+              placeholder="เช่น ร้อนพิเศษ แยกน้ำแข็ง..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
-            <div className="quick-note-row">
-              {quickNoteOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className="quick-note-btn"
-                  onClick={() => applyQuickNote(option)}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
           </label>
         </div>
 

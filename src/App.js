@@ -54,6 +54,7 @@ function App() {
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
   const nameInputRef = useRef(null);
+  const quickNoteOptions = ["Less sweet", "No sugar"];
 
 
   const addToCart = (item) => {
@@ -138,6 +139,17 @@ function App() {
     if (lineUrl === "#") return;
 
     window.location.href = lineUrl;
+  };
+
+  const applyQuickNote = (quickNote) => {
+    setNote((prev) => {
+      const trimmedPrev = prev.trim();
+      if (!trimmedPrev) return quickNote;
+      if (trimmedPrev.toLowerCase().includes(quickNote.toLowerCase())) {
+        return prev;
+      }
+      return `${trimmedPrev}, ${quickNote}`;
+    });
   };
 
   return (
@@ -231,7 +243,7 @@ function App() {
               className={nameError ? "error-input" : ""}
             />
             {nameError && <p className="error-text">{nameError}</p>}
-            <p className="field-hint">* Please fill in your name before ordering.</p>
+            <p className="field-hint">* Please fill your name before ordering.</p>
           </label>
 
 
@@ -243,6 +255,18 @@ function App() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
+            <div className="quick-note-row">
+              {quickNoteOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className="quick-note-btn"
+                  onClick={() => applyQuickNote(option)}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </label>
         </div>
 

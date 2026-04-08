@@ -144,17 +144,17 @@ function App() {
   return (
     <div className="app">
       <header className="shop-sticky-header">
-        <div className="shop-pill">Tui Cafe</div>
+        <div className="shop-pill">TUI COFFEE SHOP</div>
       </header>
 
       <div className="bg-blur bg-blur-1"></div>
       <div className="bg-blur bg-blur-2"></div>
 
       <section className="hero">
-        <p className="hero-badge">Premium Coffee</p>
+        <p className="hero-badge">Minimal Coffee Store</p>
         <h1>Coffee Menu</h1>
         <p className="hero-text">
-          Fresh coffee, simple ordering, and smooth mobile experience.
+          Clean menu, quick ordering, pickup at shop.
         </p>
       </section>
 

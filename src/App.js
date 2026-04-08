@@ -54,10 +54,7 @@ function App() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
-
   const nameInputRef = useRef(null);
-  const phoneInputRef = useRef(null);
 
 
   const addToCart = (item) => {
@@ -93,11 +90,10 @@ function App() {
   );
 
   const totalPrice = subtotal;
-  const isOrderReady = Boolean(customerName.trim() && phoneNumber.trim() && cart.length);
+  const isOrderReady = Boolean(customerName.trim() && cart.length);
 
   const customerSummaryRows = [
     { label: "Customer", value: customerName.trim() || "-" },
-    { label: "Phone", value: phoneNumber.trim() || "-" },
     { label: "Service", value: PICKUP_MESSAGE },
     { label: "Note", value: note.trim() || "-" },
   ];
@@ -137,14 +133,7 @@ function App() {
       return;
     }
 
-    if (!phoneNumber.trim()) {
-      setPhoneError("Fill in your phone number to order.");
-      phoneInputRef.current?.focus();
-      return;
-    }
-
     setNameError("");
-    setPhoneError("");
 
     const lineUrl = createLineOrderLink();
     if (lineUrl === "#") return;
@@ -248,17 +237,11 @@ function App() {
           <label className="field">
             <span>Phone Number</span>
             <input
-              ref={phoneInputRef}
               type="tel"
               placeholder="08x-xxx-xxxx"
               value={phoneNumber}
-              onChange={(e) => {
-                setPhoneNumber(e.target.value);
-                if (e.target.value.trim()) setPhoneError("");
-              }}
-              className={phoneError ? "error-input" : ""}
+              onChange={(e) => setPhoneNumber(e.target.value)}
             />
-            {phoneError && <p className="error-text">{phoneError}</p>}
           </label>
 
           <label className="field">

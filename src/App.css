@@ -29,9 +29,37 @@ button {
 .app {
   min-height: 100vh;
   position: relative;
-  padding: 24px 16px 110px;
+  padding: 88px 16px 110px;
   overflow-x: hidden;
 }
+
+.shop-sticky-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  padding: 12px 16px;
+  background: rgba(22, 10, 7, 0.78);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+.shop-pill {
+  width: fit-content;
+  margin: 0 auto;
+  border-radius: 999px;
+  padding: 8px 16px;
+  background: rgba(248, 204, 132, 0.13);
+  border: 1px solid rgba(248, 204, 132, 0.35);
+  color: #f9d2a2;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
 
 .bg-blur {
   position: fixed;
@@ -160,14 +188,42 @@ button {
 }
 
 .add-btn {
+  position: relative;
+  overflow: hidden;
   border: none;
   border-radius: 20px;
-  background: #e2b26f;
+  background: linear-gradient(135deg, #f7c983, #d89d5b);
   color: #2b130d;
   padding: 16px 24px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   min-width: 120px;
+  box-shadow: 0 8px 18px rgba(216, 157, 91, 0.38);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+
+.add-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.35), transparent 65%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(216, 157, 91, 0.45);
+  filter: brightness(1.03);
+}
+
+.add-btn:hover::after {
+  opacity: 1;
+}
+
+.add-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 6px 12px rgba(216, 157, 91, 0.35);
 }
 
 .cart-bar {
@@ -324,6 +380,24 @@ button {
   margin-top: 16px;
 }
 
+.card-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+  color: #f3bf82;
+}
+
+.pickup-pill {
+  margin: 0 0 14px;
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(6, 199, 85, 0.12);
+  border: 1px solid rgba(6, 199, 85, 0.35);
+  color: #8cf3b8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .field {
   display: block;
   margin-bottom: 14px;
@@ -357,28 +431,6 @@ button {
   color: rgba(255, 255, 255, 0.38);
 }
 
-.type-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 18px;
-  padding: 4px;
-  gap: 4px;
-}
-
-.type-switch button {
-  border: none;
-  border-radius: 14px;
-  padding: 14px 12px;
-  background: transparent;
-  color: white;
-  font-weight: 700;
-}
-
-.type-switch button.active {
-  background: #e1b16f;
-  color: #2a120c;
-}
 
 .drawer-items {
   display: grid;
@@ -447,18 +499,33 @@ button {
   font-weight: 700;
 }
 
-.summary-card div {
+.summary-subcard {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.summary-subcard + .summary-subcard {
+  margin-top: 12px;
+}
+
+.summary-row {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: rgba(255, 255, 255, 0.86);
+}
+
+.summary-row:last-child {
+  margin-bottom: 0;
 }
 
 .summary-card hr {
   border: none;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin: 10px 0 14px;
+  margin: 12px 0;
 }
 
 .summary-total {
@@ -481,6 +548,15 @@ button {
 }
 
 @media (max-width: 480px) {
+  .shop-sticky-header {
+    padding: 10px 12px;
+  }
+
+  .shop-pill {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
   .hero h1 {
     font-size: 42px;
   }
@@ -514,20 +590,7 @@ button {
   cursor: not-allowed;
 }
 
-.error {
-  border: 1px solid #ff6b6b !important;
-}
 
-.error-text {
-  margin-top: 8px;
-  color: #ffd5d5;
-  background: rgba(255, 80, 80, 0.14);
-  border: 1px solid rgba(255, 120, 120, 0.28);
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 700;
-}
 
 .error-input {
   border: 1.5px solid #ff7b7b !important;

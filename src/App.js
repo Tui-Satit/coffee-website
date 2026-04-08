@@ -165,7 +165,7 @@ function App() {
         <p className="hero-badge">Minimal Coffee Store</p>
         <h1>Coffee Menu</h1>
         <p className="hero-text">
-          Less sweet and no sugar options are available for every menu item. View the full menu to order.
+          Clean menu, quick ordering, pickup at shop.
         </p>
       </section>
 

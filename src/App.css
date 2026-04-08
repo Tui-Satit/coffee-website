@@ -440,3 +440,9 @@ button {
   font-size: 12px;
   font-weight: 600;
 }
+
+.field-hint {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}

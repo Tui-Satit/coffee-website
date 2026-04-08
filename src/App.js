@@ -51,7 +51,6 @@ function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
   const nameInputRef = useRef(null);
@@ -232,17 +231,9 @@ function App() {
               className={nameError ? "error-input" : ""}
             />
             {nameError && <p className="error-text">{nameError}</p>}
+            <p className="field-hint">* Please fill in your name before ordering.</p>
           </label>
 
-          <label className="field">
-            <span>Phone Number</span>
-            <input
-              type="tel"
-              placeholder="08x-xxx-xxxx"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-            />
-          </label>
 
           <label className="field">
             <span>Note to Shop</span>

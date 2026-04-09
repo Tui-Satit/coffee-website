@@ -50,6 +50,7 @@ const menu = [
 
 function App() {
   const [cart, setCart] = useState([]);
+  const [addedItemState, setAddedItemState] = useState({});
   const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
     menu.reduce((acc, item) => ({ ...acc, [item.id]: SUGAR_OPTIONS[0] }), {})
   );
@@ -75,6 +76,14 @@ function App() {
       }
       return [...prev, { ...item, qty: 1, sugar }];
     });
+  };
+
+  const handleAddToCart = (item) => {
+    addToCart(item);
+    setAddedItemState((prev) => ({ ...prev, [item.id]: true }));
+    setTimeout(() => {
+      setAddedItemState((prev) => ({ ...prev, [item.id]: false }));
+    }, 1000);
   };
 
   const updateQty = (id, sugar, change) => {
@@ -209,8 +218,11 @@ function App() {
                     <span className="price-label">ราคา</span>
                     <strong>฿{item.price}</strong>
                   </div>
-                  <button className="add-btn" onClick={() => addToCart(item)}>
-                    + เพิ่มลงตะกร้า
+                  <button
+                    className="add-btn"
+                    onClick={() => handleAddToCart(item)}
+                  >
+                    {addedItemState[item.id] ? "✓ เพิ่มแล้ว" : "+ เพิ่มลงตะกร้า"}
                   </button>
                 </div>
               </div>

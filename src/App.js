@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import "./App.css";
 
-const SHOP_LINE_ID = "@947ozwwk";
+
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 
@@ -59,6 +59,11 @@ function App() {
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
   const nameInputRef = useRef(null);
+
+    // 👇 ✅ วางตรงนี้
+  
+// 👆 ✅ วางตรงนี้
+
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
@@ -122,46 +127,56 @@ function App() {
     { label: "จำนวนรายการ", value: totalItems },
   ];
 
-  const createLineOrderLink = () => {
-    if (cart.length === 0) {
-      alert("กรุณาเลือกเมนูก่อน");
-      return "#";
-    }
+  
+ // Here 
+  const sendOrderToLine = async () => {
+  if (cart.length === 0) {
+    alert("Please add items first");
+    return;
+  }
 
-    const orderText = [
-      "☕ ออเดอร์กาแฟใหม่",
-      "",
-      ...customerSummaryRows.map((row) => `${row.label}: ${row.value}`),
-      "",
-      "รายการ:",
-      ...cart.map(
-        (item) =>
-          `- ${item.name} (${item.sugar}) x${item.qty} = ฿${item.price * item.qty}`
-      ),
-      "",
-      ...orderSummaryRows.map((row) => `${row.label}: ${row.value}`),
-      `ยอดรวม: ฿${totalPrice}`,
-    ].join("\n");
+  if (!customerName.trim()) {
+    setNameError("กรุณากรอกชื่อก่อน");
+    nameInputRef.current?.focus();
+    return;
+  }
 
-    return `https://line.me/R/oaMessage/${encodeURIComponent(
-      SHOP_LINE_ID
-    )}/?${encodeURIComponent(orderText)}`;
+  const orderData = {
+    customerName,
+    note,
+    pickupTime: "รับที่ร้าน",
+    items: cart,
+    totalPrice: totalPrice,
   };
 
-  const handleOrderWithLine = () => {
-    if (!customerName.trim()) {
-      setNameError("กรุณากรอกชื่อ");
-      nameInputRef.current?.focus();
-      return;
-    }
+  try {
+    const res = await fetch("http://localhost:3002/send-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderData),
+    });
 
-    setNameError("");
+    const data = await res.json();
 
-    const lineUrl = createLineOrderLink();
-    if (lineUrl === "#") return;
-
-    window.location.href = lineUrl;
-  };
+    //
+    if (data.success) {
+  alert("ส่งออเดอร์เรียบร้อย ✅");
+  setCart([]);
+  setCustomerName("");
+  setNote("");
+  setCartOpen(false);
+} else {
+  alert("ส่งไม่สำเร็จ: " + JSON.stringify(data.error));
+  console.log("SERVER ERROR:", data.error);
+}
+    //
+  } catch (error) {
+    console.error(error);
+    alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+  }
+};
 
   return (
     <div className="app">
@@ -342,7 +357,7 @@ function App() {
 
         <button
           className="line-order-btn"
-          onClick={handleOrderWithLine}
+          onClick={sendOrderToLine}
           disabled={!isOrderReady}
         >
           ส่งออเดอร์ผ่าน LINE

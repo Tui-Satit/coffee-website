@@ -78,12 +78,12 @@ This project now uses `src/api.js` for all frontend API requests.
 Create a `.env.local` file for local development:
 
 ```bash
-REACT_APP_API_BASE_URL=http://localhost:3002
+REACT_APP_API_URL=http://localhost:3002
 ```
 
 For production (including Vercel), set:
 
-- `REACT_APP_API_BASE_URL` to your deployed API origin (for example `https://api.your-domain.com`).
+- `REACT_APP_API_URL` to your deployed API origin (for example `https://api.your-domain.com`).
 
 > On Vercel, configure this in **Project Settings → Environment Variables** and redeploy.
 

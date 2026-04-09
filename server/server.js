@@ -5,7 +5,7 @@ const axios = require("axios");
 const app = express();
 app.use(bodyParser.json());
 
-const CHANNEL_ACCESS_TOKEN = "PUT_YOUR_TOKEN_HERE";
+const CHANNEL_ACCESS_TOKEN = "ch93j64aCG/8LWnxGEkDIkh3RAzd1dTNvdkaHffv8KqSZG0zCEW5GHjFnzIEtprSywAQ8rZJA9h9PNShBKP+XVdnkCtrdZXUxhN5AlY4HCOIizG2JGU4O8B1tcIflkRqEAHaAOqPom1n6nCcokD5uwdB04t89/1O/w1cDnyilFU=";
 
 app.post("/webhook", async (req, res) => {
   const events = req.body.events;
@@ -40,6 +40,6 @@ app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
 });
 
-app.listen(3000, () => {
-  console.log("🚀 Server running on port 3000");
+app.listen(process.env.PORT || 3000, () => {
+  console.log("🚀 Server running");
 });

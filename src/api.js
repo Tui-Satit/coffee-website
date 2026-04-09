@@ -1,32 +1,11 @@
-const DEFAULT_DEV_API_BASE_URL = "http://localhost:3002";
-
 const normalizeBaseUrl = (url = "") => url.replace(/\/+$/, "");
 
-const resolveBaseUrl = () => {
-  const envBaseUrl = process.env.REACT_APP_API_BASE_URL?.trim();
-
-  if (envBaseUrl) {
-    return normalizeBaseUrl(envBaseUrl);
-  }
-
-  if (process.env.NODE_ENV === "development") {
-    return DEFAULT_DEV_API_BASE_URL;
-  }
-
-  return "";
-};
-
-const API_BASE_URL = resolveBaseUrl();
-
-if (process.env.NODE_ENV === "production" && !API_BASE_URL) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    "REACT_APP_API_BASE_URL is not set. API calls will use relative URLs in production."
-  );
-}
+const API_URL = normalizeBaseUrl(
+  process.env.REACT_APP_API_URL || "http://localhost:3002"
+);
 
 export const apiConfig = {
-  baseUrl: API_BASE_URL,
+  baseUrl: API_URL,
 };
 
 export const buildApiUrl = (path) => {

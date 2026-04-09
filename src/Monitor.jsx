@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getJson } from "./api";
 
 function Monitor() {
   const [orders, setOrders] = useState([]);
@@ -52,8 +53,7 @@ function Monitor() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("http://localhost:3002/orders");
-        const data = await res.json();
+        const data = await getJson("/orders");
 
         if (data.length > previousOrderCountRef.current) {
           if (previousOrderCountRef.current !== 0) {

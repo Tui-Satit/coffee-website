@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 const SHOP_LINE_ID = "@947ozwwk";
@@ -57,7 +57,17 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
+  const [addedStatusByItem, setAddedStatusByItem] = useState({});
+  const addStatusTimeoutsRef = useRef({});
   const nameInputRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      Object.values(addStatusTimeoutsRef.current).forEach((timeoutId) =>
+        clearTimeout(timeoutId)
+      );
+    };
+  }, []);
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
@@ -75,6 +85,17 @@ function App() {
       }
       return [...prev, { ...item, qty: 1, sugar }];
     });
+
+    setAddedStatusByItem((prev) => ({ ...prev, [item.id]: true }));
+
+    if (addStatusTimeoutsRef.current[item.id]) {
+      clearTimeout(addStatusTimeoutsRef.current[item.id]);
+    }
+
+    addStatusTimeoutsRef.current[item.id] = setTimeout(() => {
+      setAddedStatusByItem((prev) => ({ ...prev, [item.id]: false }));
+      delete addStatusTimeoutsRef.current[item.id];
+    }, 1000);
   };
 
   const updateQty = (id, sugar, change) => {
@@ -210,7 +231,7 @@ function App() {
                     <strong>฿{item.price}</strong>
                   </div>
                   <button className="add-btn" onClick={() => addToCart(item)}>
-                    + เพิ่มลงตะกร้า
+                    {addedStatusByItem[item.id] ? "✓ เพิ่มแล้ว" : "+ เพิ่มลงตะกร้า"}
                   </button>
                 </div>
               </div>

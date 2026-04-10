@@ -5,7 +5,11 @@ import { postJson } from "./api";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
-const DEFAULT_TEMPERATURE_OPTIONS = ["Hot", "Cold"];
+const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
+const TEMPERATURE_LABELS = {
+  Cold: "❄️ Cold",
+  Hot: "🔥 Hot",
+};
 
 const menu = [
   {
@@ -74,7 +78,7 @@ function App() {
   );
   const [selectedTemperatureByItem, setSelectedTemperatureByItem] = useState(() =>
     menuWithTemperatureOptions.reduce(
-      (acc, item) => ({ ...acc, [item.id]: item.temperatureOptions?.[0] || "Hot" }),
+      (acc, item) => ({ ...acc, [item.id]: item.temperatureOptions?.[0] || "Cold" }),
       {}
     )
   );
@@ -92,7 +96,7 @@ function App() {
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
     const temperature =
-      selectedTemperatureByItem[item.id] || item.temperatureOptions?.[0] || "Hot";
+      selectedTemperatureByItem[item.id] || item.temperatureOptions?.[0] || "Cold";
     if (!sugar) {
       alert("กรุณาเลือกระดับความหวานก่อนเพิ่มลงตะกร้า");
       return;
@@ -237,7 +241,7 @@ function App() {
                     value={
                       selectedTemperatureByItem[item.id] ||
                       item.temperatureOptions?.[0] ||
-                      "Hot"
+                      "Cold"
                     }
                     onChange={(e) =>
                       setSelectedTemperatureByItem((prev) => ({
@@ -248,7 +252,7 @@ function App() {
                   >
                     {item.temperatureOptions.map((option) => (
                       <option key={option} value={option}>
-                        {option}
+                        {TEMPERATURE_LABELS[option] || option}
                       </option>
                     ))}
                   </select>

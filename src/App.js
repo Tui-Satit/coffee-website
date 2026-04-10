@@ -152,8 +152,8 @@ function App() {
 
   const summaryRows = [
     { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
+    { label: "บริการ", value: PICKUP_MESSAGE },
     { label: "หมายเหตุ", value: note.trim() || "-" },
-    { label: "จำนวนรวม", value: `${totalItems} แก้ว` },
   ];
 
   const sendOrderToLine = async () => {
@@ -369,6 +369,17 @@ function App() {
           ))}
         </div>
 
+        <div className="selected-total-card">
+          <div className="selected-total-row">
+            <span>จำนวนรวม</span>
+            <strong>{totalItems} แก้ว</strong>
+          </div>
+          <div className="selected-total-row selected-total-price">
+            <span>ยอดรวมทั้งหมด</span>
+            <strong>฿{totalPrice}</strong>
+          </div>
+        </div>
+
         <div className="summary-card">
           <h3 className="card-title">สรุปออเดอร์</h3>
 
@@ -379,11 +390,6 @@ function App() {
                 <span>{row.value}</span>
               </div>
             ))}
-            <hr />
-            <div className="summary-total">
-              <span>ยอดรวม</span>
-              <span>฿{totalPrice}</span>
-            </div>
           </div>
         </div>
 

@@ -9,6 +9,10 @@ const TEMPERATURE_LABELS = {
   Cold: "❄️ Cold",
   Hot: "🔥 Hot",
 };
+const ORDER_TEMPERATURE_LABELS = {
+  Cold: "Cold",
+  Hot: "Hot",
+};
 
 const menu = [
   {
@@ -160,6 +164,11 @@ function App() {
     { label: "ยอดรวมย่อย", value: `฿${subtotal}` },
     { label: "จำนวนรายการ", value: totalItems },
   ];
+
+  const getOrderTemperatureLabel = (temperature) =>
+    ORDER_TEMPERATURE_LABELS[temperature] || temperature || "Cold";
+
+  const getOrderSugarLabel = (sugar) => sugar || SUGAR_OPTIONS[0];
 
   const sendOrderToLine = async () => {
     if (cart.length === 0) {
@@ -387,11 +396,18 @@ function App() {
 
           <div className="summary-subcard">
             {cart.map((item) => (
-              <div key={`${item.id}-${item.temperature}-${item.sugar}`} className="summary-row">
-                <span>
-                  {item.name} ({item.temperature}) x{item.qty}
-                </span>
-                <span>฿{item.price * item.qty}</span>
+              <div
+                key={`${item.id}-${item.temperature}-${item.sugar}`}
+                className="summary-order-card"
+              >
+                <p className="summary-order-name">☕ {item.name}</p>
+                <p className="summary-order-meta">
+                  {getOrderTemperatureLabel(item.temperature)} • {getOrderSugarLabel(item.sugar)}
+                </p>
+                <div className="summary-order-footer">
+                  <span>x{item.qty}</span>
+                  <span>฿{item.price * item.qty}</span>
+                </div>
               </div>
             ))}
             {cart.length > 0 && <hr />}

@@ -24,14 +24,22 @@ app.post("/send-order", async (req, res) => {
       return res.status(400).json({ error: "No order items found" });
     }
 
-    const formatItemOption = (item) => {
-      const optionParts = [item.temperature, item.sugar].filter(Boolean);
-      return optionParts.length ? ` ${optionParts.join(" | ")}` : "";
+    const getTemperatureLabel = (temperature) => {
+      if (temperature === "Hot" || temperature === "Cold") {
+        return temperature;
+      }
+      return temperature || "Cold";
     };
+
+    const getSugarLabel = (sugar) => sugar || "ปกติ";
 
     const orderLines = items.map((item) => {
       const itemTotal = item.price * item.qty;
-      return `• ${item.name}${formatItemOption(item)} x${item.qty} = ฿${itemTotal}`;
+      return [
+        `☕ ${item.name}`,
+        `${getTemperatureLabel(item.temperature)} • ${getSugarLabel(item.sugar)}`,
+        `x${item.qty}   ฿${itemTotal}`,
+      ].join("\n");
     });
 
     const messageText = [
@@ -40,7 +48,7 @@ app.post("/send-order", async (req, res) => {
       `👤 ลูกค้า: ${customerName || "-"}`,
       "",
       "🛒 รายการสั่งซื้อ",
-      ...orderLines,
+      orderLines.join("\n\n"),
       "",
       "📝 หมายเหตุ",
       note || "-",

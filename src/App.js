@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useState } from "react";
 import "./App.css";
 import { postJson } from "./api";
 
-
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
@@ -88,15 +87,11 @@ function App() {
   const [nameValidationNotice, setNameValidationNotice] = useState(false);
   const nameInputRef = useRef(null);
 
-    // 👇 ✅ วางตรงนี้
-  
-// 👆 ✅ วางตรงนี้
-
-
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
     const temperature =
       selectedTemperatureByItem[item.id] || item.temperatureOptions?.[0] || "Cold";
+
     if (!sugar) {
       alert("กรุณาเลือกระดับความหวานก่อนเพิ่มลงตะกร้า");
       return;
@@ -161,67 +156,58 @@ function App() {
     { label: "จำนวนรายการ", value: totalItems },
   ];
 
-  
- // Here 
   const sendOrderToLine = async () => {
-  if (cart.length === 0) {
-    alert("Please add items first");
-    return;
-  }
+    if (cart.length === 0) {
+      alert("Please add items first");
+      return;
+    }
 
-  if (!customerName.trim()) {
-    alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
-    setNameValidationNotice(true);
-    nameInputRef.current?.focus();
-    return;
-  }
+    if (!customerName.trim()) {
+      alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+      setNameValidationNotice(true);
+      nameInputRef.current?.focus();
+      return;
+    }
 
-  setNameValidationNotice(false);
+    setNameValidationNotice(false);
 
-  const orderData = {
-    customerName,
-    note,
-    pickupTime: "รับที่ร้าน",
-    items: cart,
-    totalPrice: totalPrice,
+    const orderData = {
+      customerName,
+      note,
+      pickupTime: "รับที่ร้าน",
+      items: cart,
+      totalPrice: totalPrice,
+    };
+
+    try {
+      const data = await postJson("/send-order", orderData);
+
+      if (data.success) {
+        alert("ส่งออเดอร์เรียบร้อย ✅");
+        setCart([]);
+        setCustomerName("");
+        setNote("");
+        setCartOpen(false);
+      } else {
+        alert("ส่งไม่สำเร็จ: " + JSON.stringify(data.error));
+        console.log("SERVER ERROR:", data.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
+    }
   };
-
-  try {
-    const data = await postJson("/send-order", orderData);
-
-    //
-    if (data.success) {
-  alert("ส่งออเดอร์เรียบร้อย ✅");
-  setCart([]);
-  setCustomerName("");
-  setNote("");
-  setCartOpen(false);
-} else {
-  alert("ส่งไม่สำเร็จ: " + JSON.stringify(data.error));
-  console.log("SERVER ERROR:", data.error);
-}
-    //
-  } catch (error) {
-    console.error(error);
-    alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-  }
-};
 
   return (
     <div className="app">
       <header className="shop-sticky-header">
-            <div className="shop-pill">กาแฟคุณตุ่ย</div>
+        <div className="shop-pill">กาแฟคุณตุ่ย</div>
       </header>
-
-      <div className="bg-blur bg-blur-1"></div>
-      <div className="bg-blur bg-blur-2"></div>
 
       <section className="hero">
         <p className="hero-badge">ร้านกาแฟมินิมอล</p>
         <h1>เมนูกาแฟ</h1>
-        <p className="hero-text">
-          เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที
-        </p>
+        <p className="hero-text">เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที</p>
       </section>
 
       <main className="menu-section">
@@ -285,10 +271,7 @@ function App() {
                     <span className="price-label">ราคา</span>
                     <strong>฿{item.price}</strong>
                   </div>
-                  <button
-                    className="add-btn"
-                    onClick={() => handleAddToCart(item)}
-                  >
+                  <button className="add-btn" onClick={() => handleAddToCart(item)}>
                     {addedItemState[item.id] ? "✓ เพิ่มแล้ว" : "+ เพิ่มลงตะกร้า"}
                   </button>
                 </div>
@@ -302,15 +285,13 @@ function App() {
         <button className="cart-bar" onClick={() => setCartOpen(true)}>
           <div className="cart-bar-left">
             <strong>{totalItems} รายการ</strong>
-            <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
+            <span className="cart-bar-hint">Tap to view order</span>
           </div>
           <div className="cart-bar-price">฿{totalPrice}</div>
         </button>
       )}
 
-      {cartOpen && (
-        <div className="cart-overlay" onClick={() => setCartOpen(false)}></div>
-      )}
+      {cartOpen && <div className="cart-overlay" onClick={() => setCartOpen(false)}></div>}
 
       <section className={`cart-drawer ${cartOpen ? "open" : ""}`}>
         <div className="drawer-handle"></div>
@@ -346,9 +327,7 @@ function App() {
             />
           </label>
 
-          {nameValidationNotice && (
-            <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>
-          )}
+          {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}
 
           <label className="field">
             <span>หมายเหตุถึงร้าน</span>
@@ -363,10 +342,7 @@ function App() {
 
         <div className="drawer-items">
           {cart.map((item) => (
-            <div
-              className="drawer-item"
-              key={`${item.id}-${item.sugar}-${item.temperature}`}
-            >
+            <div className="drawer-item" key={`${item.id}-${item.sugar}-${item.temperature}`}>
               <div className="drawer-item-left">
                 <img src={item.image} alt={item.name} className="drawer-thumb" />
                 <div>
@@ -379,19 +355,11 @@ function App() {
               </div>
 
               <div className="qty-box">
-                <button
-                  onClick={() =>
-                    updateQty(item.id, item.sugar, item.temperature, -1)
-                  }
-                >
+                <button onClick={() => updateQty(item.id, item.sugar, item.temperature, -1)}>
                   -
                 </button>
                 <span>{item.qty}</span>
-                <button
-                  onClick={() =>
-                    updateQty(item.id, item.sugar, item.temperature, 1)
-                  }
-                >
+                <button onClick={() => updateQty(item.id, item.sugar, item.temperature, 1)}>
                   +
                 </button>
               </div>
@@ -423,10 +391,10 @@ function App() {
             {cart.length > 0 && <hr />}
             {orderSummaryRows.map((row) => (
               <div key={row.label} className="summary-row">
-              <span>{row.label}</span>
-              <span>{row.value}</span>
-            </div>
-          ))}
+                <span>{row.label}</span>
+                <span>{row.value}</span>
+              </div>
+            ))}
             <hr />
             <div className="summary-total">
               <span>ยอดรวม</span>
@@ -435,11 +403,7 @@ function App() {
           </div>
         </div>
 
-        <button
-          className="line-order-btn"
-          onClick={sendOrderToLine}
-          disabled={!isOrderReady}
-        >
+        <button className="line-order-btn" onClick={sendOrderToLine} disabled={!isOrderReady}>
           ส่งออเดอร์ผ่าน LINE
         </button>
       </section>

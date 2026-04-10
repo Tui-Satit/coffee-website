@@ -85,7 +85,6 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [nameValidationNotice, setNameValidationNotice] = useState(false);
-  const [error, setError] = useState("");
   const nameInputRef = useRef(null);
 
   const addToCart = (item) => {
@@ -122,14 +121,7 @@ function App() {
   };
 
   const handleViewOrder = () => {
-    if (!customerName.trim()) {
-      alert("กรุณากรอกชื่อของคุณก่อนส่งออเดอร์");
-      setError("กรุณากรอกชื่อของคุณก่อนส่งออเดอร์");
-      return;
-    }
-
-    setError("");
-    setNameValidationNotice(false);
+    setNameValidationNotice(!customerName.trim());
     setCartOpen(true);
   };
 
@@ -302,8 +294,6 @@ function App() {
             </span>
             <span className="cart-bar-price">฿{totalPrice}</span>
           </button>
-
-          {error && <p className="error-text">{error}</p>}
         </>
       )}
 
@@ -338,9 +328,6 @@ function App() {
                 setCustomerName(e.target.value);
                 if (nameValidationNotice) {
                   setNameValidationNotice(false);
-                }
-                if (error) {
-                  setError("");
                 }
               }}
             />

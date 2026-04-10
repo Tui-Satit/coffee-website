@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
 
 app.post("/send-order", async (req, res) => {
   try {
-    const { customerName, items, totalPrice, note, pickupTime } = req.body;
+    const { customerName, items, totalPrice, note } = req.body;
 
     if (!items || !items.length) {
       return res.status(400).json({ error: "No order items found" });
@@ -33,21 +33,26 @@ app.post("/send-order", async (req, res) => {
 
     const getSugarLabel = (sugar) => sugar || "ปกติ";
 
-    const orderLines = items.map((item) => {
+    const orderLines = items.map((item, index) => {
       const itemTotal = item.price * item.qty;
-      return `☕ ${item.name} (${getTemperatureLabel(item.temperature)} • ${getSugarLabel(
+      return `${index + 1}. ${item.name} (${getTemperatureLabel(item.temperature)} • ${getSugarLabel(
         item.sugar
       )}) x${item.qty} = ฿${itemTotal}`;
     });
 
     const messageText = [
       "☕ คำสั่งซื้อใหม่",
+      "",
       `👤 ลูกค้า: ${customerName || "-"}`,
+      "",
       "🛒 รายการสั่งซื้อ",
       orderLines.join("\n"),
-      `📝 หมายเหตุ: ${note || "-"}`,
-      `⏰ เวลารับสินค้า: ${pickupTime || "-"}`,
-      `💰 ยอดรวม: ฿${totalPrice || 0}`,
+      "",
+      "📝 หมายเหตุ",
+      note || "-",
+      "",
+      "💰 ยอดรวม",
+      `฿${totalPrice || 0}`,
     ].join("\n");
 
     await axios.post(

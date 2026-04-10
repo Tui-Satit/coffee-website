@@ -187,7 +187,6 @@ function App() {
     const orderData = {
       customerName,
       note,
-      pickupTime: "รับที่ร้าน",
       items: cart,
       totalPrice: totalPrice,
     };

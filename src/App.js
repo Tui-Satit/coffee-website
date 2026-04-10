@@ -5,6 +5,7 @@ import { postJson } from "./api";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
+const DEFAULT_TEMPERATURE_OPTIONS = ["Hot", "Cold"];
 
 const menu = [
   {
@@ -12,7 +13,7 @@ const menu = [
     name: "Espresso",
     price: 60,
     desc: "กาแฟช็อตเข้มข้น กลมกล่อม",
-    temperatureOptions: ["Hot", "Cold"],
+    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
     image:
       "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
   },
@@ -21,7 +22,7 @@ const menu = [
     name: "Latte",
     price: 80,
     desc: "เอสเปรสโซผสมนมนุ่มละมุน",
-    temperatureOptions: ["Hot", "Cold"],
+    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
     image:
       "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=1000&q=80",
   },
@@ -30,7 +31,7 @@ const menu = [
     name: "Cappuccino",
     price: 80,
     desc: "ฟองนมนุ่มแน่น พร้อมรสกาแฟชัดเจน",
-    temperatureOptions: ["Hot", "Cold"],
+    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
     image:
       "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80",
   },
@@ -39,7 +40,7 @@ const menu = [
     name: "Mocha",
     price: 90,
     desc: "กาแฟช็อกโกแลตหอมหวาน สำหรับสายหวาน",
-    temperatureOptions: ["Hot", "Cold"],
+    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
     image:
       "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&w=1000&q=80",
   },
@@ -48,20 +49,31 @@ const menu = [
     name: "Americano",
     price: 70,
     desc: "กาแฟดำรสคลาสสิก ดื่มง่าย",
-    temperatureOptions: ["Hot", "Cold"],
+    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
     image:
       "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80",
   },
 ];
 
+const menuWithTemperatureOptions = menu.map((item) => ({
+  ...item,
+  temperatureOptions:
+    item.temperatureOptions?.length > 0
+      ? item.temperatureOptions
+      : DEFAULT_TEMPERATURE_OPTIONS,
+}));
+
 function App() {
   const [cart, setCart] = useState([]);
   const [addedItemState, setAddedItemState] = useState({});
   const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
-    menu.reduce((acc, item) => ({ ...acc, [item.id]: SUGAR_OPTIONS[0] }), {})
+    menuWithTemperatureOptions.reduce(
+      (acc, item) => ({ ...acc, [item.id]: SUGAR_OPTIONS[0] }),
+      {}
+    )
   );
   const [selectedTemperatureByItem, setSelectedTemperatureByItem] = useState(() =>
-    menu.reduce(
+    menuWithTemperatureOptions.reduce(
       (acc, item) => ({ ...acc, [item.id]: item.temperatureOptions?.[0] || "Hot" }),
       {}
     )
@@ -207,7 +219,7 @@ function App() {
 
       <main className="menu-section">
         <div className="menu-grid">
-          {menu.map((item) => (
+          {menuWithTemperatureOptions.map((item) => (
             <div className="menu-card" key={item.id}>
               <div className="menu-image-wrap">
                 <img src={item.image} alt={item.name} className="menu-image" />

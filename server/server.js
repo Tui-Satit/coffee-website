@@ -24,22 +24,36 @@ app.post("/send-order", async (req, res) => {
       return res.status(400).json({ error: "No order items found" });
     }
 
+    const formatItemOption = (item) => {
+      const optionParts = [];
+
+      if (item.temperature) {
+        optionParts.push(item.temperature);
+      }
+
+      if (item.sugar) {
+        optionParts.push(item.sugar);
+      }
+
+      return optionParts.length ? ` (${optionParts.join(", ")})` : "";
+    };
+
     const orderLines = items.map((item) => {
-      const temperatureLabel = item.temperature || "Hot";
-      return `• ${item.name} (${temperatureLabel}) x${item.qty} = ฿${item.price * item.qty}`;
+      const itemTotal = item.price * item.qty;
+      return `• ${item.name}${formatItemOption(item)} x${item.qty} — ฿${itemTotal}`;
     });
 
     const messageText = [
-      "🔔 New Coffee Order",
+      "☕ คำสั่งซื้อใหม่",
       "",
-      `👤 Name: ${customerName || "-"}`,
-      `📝 Note: ${note || "-"}`,
-      `⏰ Pickup time: ${pickupTime || "-"}`,
+      `ชื่อลูกค้า: ${customerName || "-"}`,
       "",
-      "📦 Order list:",
+      "รายการ:",
       ...orderLines,
+      ...(note ? ["", `หมายเหตุ: ${note}`] : []),
+      ...(pickupTime ? [`เวลารับสินค้า: ${pickupTime}`] : []),
       "",
-      `💰 Total: ฿${totalPrice || 0}`,
+      `ยอดรวม: ฿${totalPrice || 0}`,
     ].join("\n");
 
     await axios.post(

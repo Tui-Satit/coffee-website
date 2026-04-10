@@ -285,7 +285,7 @@ function App() {
         <button className="cart-bar" onClick={() => setCartOpen(true)}>
           <div className="cart-bar-left">
             <strong>{totalItems} รายการ</strong>
-            <span className="cart-bar-hint">Tap to view order</span>
+            <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
           </div>
           <div className="cart-bar-price">฿{totalPrice}</div>
         </button>

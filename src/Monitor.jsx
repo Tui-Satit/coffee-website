@@ -158,7 +158,7 @@ function Monitor() {
                 <strong>☕ รายการ:</strong>
                 {o.items.map((item, index) => (
                   <div key={index}>
-                    - {item.name} x {item.qty}
+                    - {item.name} ({item.temperature || "Hot"}) x {item.qty}
                   </div>
                 ))}
               </div>

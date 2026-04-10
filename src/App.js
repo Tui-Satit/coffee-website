@@ -9,10 +9,6 @@ const TEMPERATURE_LABELS = {
   Cold: "❄️ Cold",
   Hot: "🔥 Hot",
 };
-const ORDER_TEMPERATURE_LABELS = {
-  Cold: "Cold",
-  Hot: "Hot",
-};
 
 const menu = [
   {
@@ -154,21 +150,11 @@ function App() {
   const totalPrice = subtotal;
   const isOrderReady = Boolean(cart.length);
 
-  const customerSummaryRows = [
+  const summaryRows = [
     { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
-    { label: "บริการ", value: PICKUP_MESSAGE },
     { label: "หมายเหตุ", value: note.trim() || "-" },
+    { label: "จำนวนรวม", value: `${totalItems} แก้ว` },
   ];
-
-  const orderSummaryRows = [
-    { label: "ยอดรวมย่อย", value: `฿${subtotal}` },
-    { label: "จำนวนรายการ", value: totalItems },
-  ];
-
-  const getOrderTemperatureLabel = (temperature) =>
-    ORDER_TEMPERATURE_LABELS[temperature] || temperature || "Cold";
-
-  const getOrderSugarLabel = (sugar) => sugar || SUGAR_OPTIONS[0];
 
   const sendOrderToLine = async () => {
     if (cart.length === 0) {
@@ -360,11 +346,13 @@ function App() {
               <div className="drawer-item-left">
                 <img src={item.image} alt={item.name} className="drawer-thumb" />
                 <div>
-                  <h4>
-                    {item.name} ({item.temperature}) x{item.qty}
-                  </h4>
-                  <p>ความหวาน: {item.sugar}</p>
-                  <p>฿{item.price} / แก้ว</p>
+                  <h4>{item.name}</h4>
+                  <p>
+                    {item.temperature} • {item.sugar}
+                  </p>
+                  <p>
+                    ฿{item.price} × {item.qty} = <strong>฿{item.price * item.qty}</strong>
+                  </p>
                 </div>
               </div>
 
@@ -385,32 +373,7 @@ function App() {
           <h3 className="card-title">สรุปออเดอร์</h3>
 
           <div className="summary-subcard">
-            {customerSummaryRows.map((row) => (
-              <div key={row.label} className="summary-row">
-                <span>{row.label}</span>
-                <span>{row.value}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="summary-subcard">
-            {cart.map((item) => (
-              <div
-                key={`${item.id}-${item.temperature}-${item.sugar}`}
-                className="summary-order-card"
-              >
-                <p className="summary-order-name">☕ {item.name}</p>
-                <p className="summary-order-meta">
-                  {getOrderTemperatureLabel(item.temperature)} • {getOrderSugarLabel(item.sugar)}
-                </p>
-                <div className="summary-order-footer">
-                  <span>x{item.qty}</span>
-                  <span>฿{item.price * item.qty}</span>
-                </div>
-              </div>
-            ))}
-            {cart.length > 0 && <hr />}
-            {orderSummaryRows.map((row) => (
+            {summaryRows.map((row) => (
               <div key={row.label} className="summary-row">
                 <span>{row.label}</span>
                 <span>{row.value}</span>

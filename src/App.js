@@ -121,11 +121,6 @@ function App() {
   };
 
   const handleOpenOrderPanel = () => {
-    if (!customerName.trim()) {
-      setNameValidationNotice(true);
-      return;
-    }
-
     setNameValidationNotice(false);
     setCartOpen(true);
   };

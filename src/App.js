@@ -291,7 +291,7 @@ function App() {
       </main>
 
       {totalItems > 0 && (
-        <button className="cart-bar" onClick={handleOpenOrderPanel}>
+        <button type="button" className="cart-bar" onClick={handleOpenOrderPanel}>
           <div className="cart-bar-left">
             <strong>{totalItems} รายการ</strong>
             <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>

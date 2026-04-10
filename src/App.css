@@ -225,6 +225,9 @@ button {
   align-items: center;
   z-index: 60;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cart-bar-left {

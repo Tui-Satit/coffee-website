@@ -12,6 +12,7 @@ const menu = [
     name: "Espresso",
     price: 60,
     desc: "กาแฟช็อตเข้มข้น กลมกล่อม",
+    temperatureOptions: ["Hot"],
     image:
       "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
   },
@@ -20,6 +21,7 @@ const menu = [
     name: "Latte",
     price: 80,
     desc: "เอสเปรสโซผสมนมนุ่มละมุน",
+    temperatureOptions: ["Hot", "Cold"],
     image:
       "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=1000&q=80",
   },
@@ -28,6 +30,7 @@ const menu = [
     name: "Cappuccino",
     price: 80,
     desc: "ฟองนมนุ่มแน่น พร้อมรสกาแฟชัดเจน",
+    temperatureOptions: ["Hot", "Cold"],
     image:
       "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80",
   },
@@ -36,6 +39,7 @@ const menu = [
     name: "Mocha",
     price: 90,
     desc: "กาแฟช็อกโกแลตหอมหวาน สำหรับสายหวาน",
+    temperatureOptions: ["Hot", "Cold"],
     image:
       "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&w=1000&q=80",
   },
@@ -44,6 +48,7 @@ const menu = [
     name: "Americano",
     price: 70,
     desc: "กาแฟดำรสคลาสสิก ดื่มง่าย",
+    temperatureOptions: ["Hot", "Cold"],
     image:
       "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80",
   },
@@ -54,6 +59,12 @@ function App() {
   const [addedItemState, setAddedItemState] = useState({});
   const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
     menu.reduce((acc, item) => ({ ...acc, [item.id]: SUGAR_OPTIONS[0] }), {})
+  );
+  const [selectedTemperatureByItem, setSelectedTemperatureByItem] = useState(() =>
+    menu.reduce(
+      (acc, item) => ({ ...acc, [item.id]: item.temperatureOptions?.[0] || "Hot" }),
+      {}
+    )
   );
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -68,19 +79,25 @@ function App() {
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
+    const temperature =
+      selectedTemperatureByItem[item.id] || item.temperatureOptions?.[0] || "Hot";
     if (!sugar) {
       alert("กรุณาเลือกระดับความหวานก่อนเพิ่มลงตะกร้า");
       return;
     }
 
     setCart((prev) => {
-      const found = prev.find((p) => p.id === item.id && p.sugar === sugar);
+      const found = prev.find(
+        (p) => p.id === item.id && p.sugar === sugar && p.temperature === temperature
+      );
       if (found) {
         return prev.map((p) =>
-          p.id === item.id && p.sugar === sugar ? { ...p, qty: p.qty + 1 } : p
+          p.id === item.id && p.sugar === sugar && p.temperature === temperature
+            ? { ...p, qty: p.qty + 1 }
+            : p
         );
       }
-      return [...prev, { ...item, qty: 1, sugar }];
+      return [...prev, { ...item, qty: 1, sugar, temperature }];
     });
   };
 
@@ -92,11 +109,11 @@ function App() {
     }, 1000);
   };
 
-  const updateQty = (id, sugar, change) => {
+  const updateQty = (id, sugar, temperature, change) => {
     setCart((prev) =>
       prev
         .map((item) =>
-          item.id === id && item.sugar === sugar
+          item.id === id && item.sugar === sugar && item.temperature === temperature
             ? { ...item, qty: Math.max(0, item.qty + change) }
             : item
         )
@@ -203,6 +220,29 @@ function App() {
                 </div>
 
                 <label className="sugar-field">
+                  <span>อุณหภูมิ</span>
+                  <select
+                    value={
+                      selectedTemperatureByItem[item.id] ||
+                      item.temperatureOptions?.[0] ||
+                      "Hot"
+                    }
+                    onChange={(e) =>
+                      setSelectedTemperatureByItem((prev) => ({
+                        ...prev,
+                        [item.id]: e.target.value,
+                      }))
+                    }
+                  >
+                    {item.temperatureOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="sugar-field">
                   <span>ระดับความหวาน</span>
                   <select
                     value={selectedSugarByItem[item.id] || SUGAR_OPTIONS[0]}
@@ -301,21 +341,37 @@ function App() {
 
         <div className="drawer-items">
           {cart.map((item) => (
-            <div className="drawer-item" key={`${item.id}-${item.sugar}`}>
+            <div
+              className="drawer-item"
+              key={`${item.id}-${item.sugar}-${item.temperature}`}
+            >
               <div className="drawer-item-left">
                 <img src={item.image} alt={item.name} className="drawer-thumb" />
                 <div>
                   <h4>
-                    {item.name} ({item.sugar}) x{item.qty}
+                    {item.name} ({item.temperature}) x{item.qty}
                   </h4>
+                  <p>ความหวาน: {item.sugar}</p>
                   <p>฿{item.price} / แก้ว</p>
                 </div>
               </div>
 
               <div className="qty-box">
-                <button onClick={() => updateQty(item.id, item.sugar, -1)}>-</button>
+                <button
+                  onClick={() =>
+                    updateQty(item.id, item.sugar, item.temperature, -1)
+                  }
+                >
+                  -
+                </button>
                 <span>{item.qty}</span>
-                <button onClick={() => updateQty(item.id, item.sugar, 1)}>+</button>
+                <button
+                  onClick={() =>
+                    updateQty(item.id, item.sugar, item.temperature, 1)
+                  }
+                >
+                  +
+                </button>
               </div>
             </div>
           ))}
@@ -334,6 +390,15 @@ function App() {
           </div>
 
           <div className="summary-subcard">
+            {cart.map((item) => (
+              <div key={`${item.id}-${item.temperature}-${item.sugar}`} className="summary-row">
+                <span>
+                  {item.name} ({item.temperature}) x{item.qty}
+                </span>
+                <span>฿{item.price * item.qty}</span>
+              </div>
+            ))}
+            {cart.length > 0 && <hr />}
             {orderSummaryRows.map((row) => (
               <div key={row.label} className="summary-row">
               <span>{row.label}</span>

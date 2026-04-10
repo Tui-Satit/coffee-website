@@ -24,9 +24,10 @@ app.post("/send-order", async (req, res) => {
       return res.status(400).json({ error: "No order items found" });
     }
 
-    const orderLines = items.map(
-      (item) => `• ${item.name} x${item.qty} = ฿${item.price * item.qty}`
-    );
+    const orderLines = items.map((item) => {
+      const temperatureLabel = item.temperature || "Hot";
+      return `• ${item.name} (${temperatureLabel}) x${item.qty} = ฿${item.price * item.qty}`;
+    });
 
     const messageText = [
       "🔔 New Coffee Order",

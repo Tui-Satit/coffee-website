@@ -1,7 +1,7 @@
 const normalizeBaseUrl = (url = "") => url.replace(/\/+$/, "");
 
 const API_URL = normalizeBaseUrl(
-  process.env.REACT_APP_API_URL || "http://localhost:3002"
+  process.env.REACT_APP_API_URL || "https://coffee-website-olive-seven.vercel.app"
 );
 
 export const apiConfig = {

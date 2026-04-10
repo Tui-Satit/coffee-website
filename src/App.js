@@ -163,7 +163,6 @@ function App() {
     }
 
     if (!customerName.trim()) {
-      alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
       setNameValidationNotice(true);
       nameInputRef.current?.focus();
       return;
@@ -327,7 +326,7 @@ function App() {
             />
           </label>
 
-          {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อของคุณ</p>}
+          {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}
 
           <label className="field">
             <span>หมายเหตุถึงร้าน</span>

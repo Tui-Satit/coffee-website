@@ -85,6 +85,7 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [nameValidationNotice, setNameValidationNotice] = useState(false);
+  const [error, setError] = useState("");
   const nameInputRef = useRef(null);
 
   const addToCart = (item) => {
@@ -120,7 +121,14 @@ function App() {
     }, 1000);
   };
 
-  const handleOpenOrderPanel = () => {
+  const handleViewOrder = () => {
+    if (!customerName.trim()) {
+      alert("กรุณากรอกชื่อของคุณก่อนส่งออเดอร์");
+      setError("กรุณากรอกชื่อของคุณก่อนส่งออเดอร์");
+      return;
+    }
+
+    setError("");
     setNameValidationNotice(false);
     setCartOpen(true);
   };
@@ -286,13 +294,17 @@ function App() {
       </main>
 
       {totalItems > 0 && (
-        <button type="button" className="cart-bar" onClick={handleOpenOrderPanel}>
-          <span className="cart-bar-left">
-            <strong>{totalItems} รายการ</strong>
-            <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
-          </span>
-          <span className="cart-bar-price">฿{totalPrice}</span>
-        </button>
+        <>
+          <button type="button" className="cart-bar" onClick={handleViewOrder}>
+            <span className="cart-bar-left">
+              <strong>{totalItems} รายการ</strong>
+              <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
+            </span>
+            <span className="cart-bar-price">฿{totalPrice}</span>
+          </button>
+
+          {error && <p className="error-text">{error}</p>}
+        </>
       )}
 
       {cartOpen && <div className="cart-overlay" onClick={() => setCartOpen(false)}></div>}
@@ -326,6 +338,9 @@ function App() {
                 setCustomerName(e.target.value);
                 if (nameValidationNotice) {
                   setNameValidationNotice(false);
+                }
+                if (error) {
+                  setError("");
                 }
               }}
             />

@@ -25,35 +25,31 @@ app.post("/send-order", async (req, res) => {
     }
 
     const formatItemOption = (item) => {
-      const optionParts = [];
-
-      if (item.temperature) {
-        optionParts.push(item.temperature);
-      }
-
-      if (item.sugar) {
-        optionParts.push(item.sugar);
-      }
-
-      return optionParts.length ? ` (${optionParts.join(", ")})` : "";
+      const optionParts = [item.temperature, item.sugar].filter(Boolean);
+      return optionParts.length ? ` ${optionParts.join(" | ")}` : "";
     };
 
     const orderLines = items.map((item) => {
       const itemTotal = item.price * item.qty;
-      return `• ${item.name}${formatItemOption(item)} x${item.qty} — ฿${itemTotal}`;
+      return `• ${item.name}${formatItemOption(item)} x${item.qty} = ฿${itemTotal}`;
     });
 
     const messageText = [
       "☕ คำสั่งซื้อใหม่",
       "",
-      `ชื่อลูกค้า: ${customerName || "-"}`,
+      `👤 ลูกค้า: ${customerName || "-"}`,
       "",
-      "รายการ:",
+      "🛒 รายการสั่งซื้อ",
       ...orderLines,
-      ...(note ? ["", `หมายเหตุ: ${note}`] : []),
-      ...(pickupTime ? [`เวลารับสินค้า: ${pickupTime}`] : []),
       "",
-      `ยอดรวม: ฿${totalPrice || 0}`,
+      "📝 หมายเหตุ",
+      note || "-",
+      "",
+      "⏰ เวลารับสินค้า",
+      pickupTime || "-",
+      "",
+      "💰 ยอดรวม",
+      `฿${totalPrice || 0}`,
     ].join("\n");
 
     await axios.post(

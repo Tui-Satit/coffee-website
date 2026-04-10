@@ -85,7 +85,6 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
-  const [nameError, setNameError] = useState("");
   const nameInputRef = useRef(null);
 
     // 👇 ✅ วางตรงนี้
@@ -148,7 +147,7 @@ function App() {
   );
 
   const totalPrice = subtotal;
-  const isOrderReady = Boolean(customerName.trim() && cart.length);
+  const isOrderReady = Boolean(cart.length);
 
   const customerSummaryRows = [
     { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
@@ -170,7 +169,7 @@ function App() {
   }
 
   if (!customerName.trim()) {
-    setNameError("กรุณากรอกชื่อก่อน");
+    alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
     nameInputRef.current?.focus();
     return;
   }
@@ -333,14 +332,8 @@ function App() {
               type="text"
               placeholder="กรอกชื่อของคุณ"
               value={customerName}
-              onChange={(e) => {
-                setCustomerName(e.target.value);
-                if (e.target.value.trim()) setNameError("");
-              }}
-              className={nameError ? "error-input" : ""}
+              onChange={(e) => setCustomerName(e.target.value)}
             />
-            {nameError && <p className="error-text">{nameError}</p>}
-            <p className="field-hint">* กรุณากรอกชื่อก่อนส่งออเดอร์</p>
           </label>
 
 

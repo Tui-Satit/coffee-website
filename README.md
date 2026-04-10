@@ -68,3 +68,27 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Centralized API configuration
+
+This project now uses `src/api.js` for all frontend API requests.
+
+### Environment variables
+
+Create a `.env.local` file for local development:
+
+```bash
+REACT_APP_API_URL=http://localhost:3002
+```
+
+For production (including Vercel), set:
+
+- `REACT_APP_API_URL` to your deployed API origin (for example `https://api.your-domain.com`).
+
+> On Vercel, configure this in **Project Settings → Environment Variables** and redeploy.
+
+### Why this is production-ready
+
+- API base URL is no longer hardcoded in React components.
+- All requests route through shared helpers in `src/api.js`.
+- Environment-specific behavior is controlled through env vars, which is the recommended setup for Vercel.

@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import "./App.css";
+import { postJson } from "./api";
 
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
@@ -150,15 +151,7 @@ function App() {
   };
 
   try {
-    const res = await fetch("http://localhost:3002/send-order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderData),
-    });
-
-    const data = await res.json();
+    const data = await postJson("/send-order", orderData);
 
     //
     if (data.success) {

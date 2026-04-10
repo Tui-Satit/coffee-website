@@ -120,6 +120,16 @@ function App() {
     }, 1000);
   };
 
+  const handleOpenOrderPanel = () => {
+    if (!customerName.trim()) {
+      setNameValidationNotice(true);
+      return;
+    }
+
+    setNameValidationNotice(false);
+    setCartOpen(true);
+  };
+
   const updateQty = (id, sugar, temperature, change) => {
     setCart((prev) =>
       prev
@@ -281,7 +291,7 @@ function App() {
       </main>
 
       {totalItems > 0 && (
-        <button className="cart-bar" onClick={() => setCartOpen(true)}>
+        <button className="cart-bar" onClick={handleOpenOrderPanel}>
           <div className="cart-bar-left">
             <strong>{totalItems} รายการ</strong>
             <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>

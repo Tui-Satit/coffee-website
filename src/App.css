@@ -211,6 +211,8 @@ button {
 }
 
 .cart-bar {
+  appearance: none;
+  -webkit-appearance: none;
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
@@ -223,9 +225,11 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  text-align: left;
   z-index: 60;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  pointer-events: auto;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

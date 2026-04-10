@@ -12,7 +12,7 @@ const menu = [
     name: "Espresso",
     price: 60,
     desc: "กาแฟช็อตเข้มข้น กลมกล่อม",
-    temperatureOptions: ["Hot"],
+    temperatureOptions: ["Hot", "Cold"],
     image:
       "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
   },

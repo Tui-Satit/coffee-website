@@ -35,29 +35,19 @@ app.post("/send-order", async (req, res) => {
 
     const orderLines = items.map((item) => {
       const itemTotal = item.price * item.qty;
-      return [
-        `☕ ${item.name}`,
-        `${getTemperatureLabel(item.temperature)} • ${getSugarLabel(item.sugar)}`,
-        `x${item.qty}   ฿${itemTotal}`,
-      ].join("\n");
+      return `☕ ${item.name} (${getTemperatureLabel(item.temperature)} • ${getSugarLabel(
+        item.sugar
+      )}) x${item.qty} = ฿${itemTotal}`;
     });
 
     const messageText = [
       "☕ คำสั่งซื้อใหม่",
-      "",
       `👤 ลูกค้า: ${customerName || "-"}`,
-      "",
       "🛒 รายการสั่งซื้อ",
-      orderLines.join("\n\n"),
-      "",
-      "📝 หมายเหตุ",
-      note || "-",
-      "",
-      "⏰ เวลารับสินค้า",
-      pickupTime || "-",
-      "",
-      "💰 ยอดรวม",
-      `฿${totalPrice || 0}`,
+      orderLines.join("\n"),
+      `📝 หมายเหตุ: ${note || "-"}`,
+      `⏰ เวลารับสินค้า: ${pickupTime || "-"}`,
+      `💰 ยอดรวม: ฿${totalPrice || 0}`,
     ].join("\n");
 
     await axios.post(

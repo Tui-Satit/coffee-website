@@ -378,6 +378,32 @@ button {
   margin-top: 10px;
 }
 
+.selected-total-card {
+  margin-top: 10px;
+  padding: 10px 11px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.selected-total-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.selected-total-row + .selected-total-row {
+  margin-top: 6px;
+}
+
+.selected-total-price {
+  font-size: 18px;
+  font-weight: 800;
+  color: #111827;
+}
+
 .drawer-item {
   display: flex;
   justify-content: space-between;

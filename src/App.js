@@ -85,6 +85,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
+  const [nameValidationNotice, setNameValidationNotice] = useState(false);
   const nameInputRef = useRef(null);
 
     // 👇 ✅ วางตรงนี้
@@ -170,9 +171,12 @@ function App() {
 
   if (!customerName.trim()) {
     alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+    setNameValidationNotice(true);
     nameInputRef.current?.focus();
     return;
   }
+
+  setNameValidationNotice(false);
 
   const orderData = {
     customerName,
@@ -331,11 +335,20 @@ function App() {
               ref={nameInputRef}
               type="text"
               placeholder="กรอกชื่อของคุณ"
+              className={nameValidationNotice ? "error-input" : ""}
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={(e) => {
+                setCustomerName(e.target.value);
+                if (nameValidationNotice) {
+                  setNameValidationNotice(false);
+                }
+              }}
             />
           </label>
 
+          {nameValidationNotice && (
+            <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>
+          )}
 
           <label className="field">
             <span>หมายเหตุถึงร้าน</span>

@@ -327,7 +327,7 @@ function App() {
             />
           </label>
 
-          {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}
+          {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อของคุณ</p>}
 
           <label className="field">
             <span>หมายเหตุถึงร้าน</span>

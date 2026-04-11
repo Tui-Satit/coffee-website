@@ -5,48 +5,45 @@ function Monitor() {
   const [orders, setOrders] = useState([]);
   const [hasUnacceptedOrder, setHasUnacceptedOrder] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+
   const previousOrderCountRef = useRef(0);
-  const beepIntervalRef = useRef(null);
+  const audioRef = useRef(null);
 
-  const playBeep = () => {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+  useEffect(() => {
+    audioRef.current = new Audio("/sounds/coffee_bell.wav");
+    audioRef.current.loop = true;
+    audioRef.current.volume = 1.0;
 
-      oscillator.type = "square";
-      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime);
-
-      gainNode.gain.setValueAtTime(1.0, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.35);
-    } catch (err) {
-      console.error("Beep sound error:", err);
-    }
-  };
-
-  const playLoudPattern = () => {
-    playBeep();
-    setTimeout(() => playBeep(), 250);
-    setTimeout(() => playBeep(), 500);
-  };
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
 
   const enableSound = async () => {
-    setSoundEnabled(true);
-    playLoudPattern();
+    try {
+      if (!audioRef.current) return;
+
+      await audioRef.current.play();
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+
+      setSoundEnabled(true);
+      alert("เปิดเสียงแจ้งเตือนแล้ว");
+    } catch (err) {
+      console.error("Enable sound failed:", err);
+      alert("ไม่สามารถเปิดเสียงได้");
+    }
   };
 
   const handleAcceptOrder = () => {
     setHasUnacceptedOrder(false);
 
-    if (beepIntervalRef.current) {
-      clearInterval(beepIntervalRef.current);
-      beepIntervalRef.current = null;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
   };
 
@@ -55,9 +52,17 @@ function Monitor() {
       try {
         const data = await getJson("/orders");
 
-        if (data.length > previousOrderCountRef.current) {
-          if (previousOrderCountRef.current !== 0) {
-            setHasUnacceptedOrder(true);
+        if (
+          data.length > previousOrderCountRef.current &&
+          previousOrderCountRef.current !== 0
+        ) {
+          setHasUnacceptedOrder(true);
+
+          if (soundEnabled && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch((err) => {
+              console.error("Audio play blocked:", err);
+            });
           }
         }
 
@@ -69,29 +74,7 @@ function Monitor() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (hasUnacceptedOrder && soundEnabled) {
-      playLoudPattern();
-
-      beepIntervalRef.current = setInterval(() => {
-        playLoudPattern();
-      }, 2500);
-    } else {
-      if (beepIntervalRef.current) {
-        clearInterval(beepIntervalRef.current);
-        beepIntervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (beepIntervalRef.current) {
-        clearInterval(beepIntervalRef.current);
-        beepIntervalRef.current = null;
-      }
-    };
-  }, [hasUnacceptedOrder, soundEnabled]);
+  }, [soundEnabled]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
@@ -108,27 +91,42 @@ function Monitor() {
           color: "#fff",
         }}
       >
-        🔊 Enable Sound
+        🔊 เปิดเสียงแจ้งเตือน
       </button>
 
       <h1>☕ Orders Monitor</h1>
 
       {hasUnacceptedOrder && (
-        <button
-          onClick={handleAcceptOrder}
+        <div
           style={{
-            backgroundColor: "green",
+            backgroundColor: "#ff4d4f",
             color: "white",
             border: "none",
-            padding: "14px 22px",
-            fontSize: "20px",
-            borderRadius: "8px",
-            cursor: "pointer",
+            padding: "16px 20px",
+            fontSize: "22px",
+            borderRadius: "12px",
             marginBottom: "20px",
           }}
         >
-          ✅ รับออเดอร์แล้ว
-        </button>
+          <div style={{ fontWeight: "bold", marginBottom: "12px" }}>
+            🔔 มีออเดอร์ใหม่!
+          </div>
+
+          <button
+            onClick={handleAcceptOrder}
+            style={{
+              backgroundColor: "green",
+              color: "white",
+              border: "none",
+              padding: "14px 22px",
+              fontSize: "20px",
+              borderRadius: "8px",
+              cursor: "pointer",
+            }}
+          >
+            ✅ รับออเดอร์แล้ว
+          </button>
+        </div>
       )}
 
       {orders.length === 0 ? (

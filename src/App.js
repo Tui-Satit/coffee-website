@@ -312,19 +312,19 @@ function App() {
 
           <label className="field">
             <span>ชื่อลูกค้า</span>
-            <input
-              ref={nameInputRef}
-              type="text"
-              placeholder="กรอกชื่อของคุณ"
-              className={nameValidationNotice ? "error-input" : ""}
-              value={customerName}
-              onChange={(e) => {
-                setCustomerName(e.target.value);
-                if (nameValidationNotice) {
-                  setNameValidationNotice(false);
-                }
-              }}
-            />
+           <input
+  ref={nameInputRef}
+  type="text"
+  placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
+  className={nameValidationNotice ? "error-input" : ""}
+  value={customerName}
+  onChange={(e) => {
+    setCustomerName(e.target.value);
+    if (nameValidationNotice) {
+      setNameValidationNotice(false);
+    }
+  }}
+/>
           </label>
 
           {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}

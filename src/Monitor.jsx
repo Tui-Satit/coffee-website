@@ -8,7 +8,8 @@ function Monitor() {
 
   const previousOrderCountRef = useRef(0);
   const audioRef = useRef(null);
-
+  const repeatIntervalRef = useRef(null);
+  
   useEffect(() => {
     audioRef.current = new Audio("/sounds/universfield-ringtone-020-365650.mp3");
   
@@ -75,32 +76,45 @@ function Monitor() {
     return () => clearInterval(interval);
   }, [soundEnabled]);
 
-
-
 const playAlert = () => {
-  const playOnce = () => {
-    const audio = new Audio("/sounds/coffee_bell.wav");
-    audio.volume = 1.0;
-    audio.play().catch(console.error);
+  const playOnce = (delay = 0) => {
+    setTimeout(() => {
+      const audio = new Audio("/sounds/universfield-ringtone-020-365650.mp3");
+      audio.volume = 1.0;
+      audio.playbackRate = 1.15;
+      audio.play().catch((err) => {
+        console.error("Audio play failed:", err);
+      });
+    }, delay);
   };
 
-  playOnce();
-
-  setTimeout(() => playOnce(), 250);
-  setTimeout(() => playOnce(), 500);
+  playOnce(0);
+  playOnce(180);
+  playOnce(360);
 };
-  useEffect(() => {
+
+useEffect(() => {
   if (hasUnacceptedOrder && soundEnabled) {
     playAlert();
 
-    const interval = setInterval(() => {
-      playAlert();
-    }, 2000);
+    if (repeatIntervalRef.current) {
+      clearInterval(repeatIntervalRef.current);
+    }
 
-    return () => clearInterval(interval);
+    repeatIntervalRef.current = setInterval(() => {
+      playAlert();
+    }, 2500);
   }
+
+  return () => {
+    if (repeatIntervalRef.current) {
+      clearInterval(repeatIntervalRef.current);
+      repeatIntervalRef.current = null;
+    }
+  };
 }, [hasUnacceptedOrder, soundEnabled]);
 
+ 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
       <button

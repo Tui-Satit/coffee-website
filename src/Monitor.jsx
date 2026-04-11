@@ -11,7 +11,7 @@ function Monitor() {
 
   useEffect(() => {
     audioRef.current = new Audio("/sounds/coffee_bell.wav");
-    audioRef.current.loop = true;
+  
     audioRef.current.volume = 1.0;
 
     return () => {
@@ -57,13 +57,12 @@ function Monitor() {
           previousOrderCountRef.current !== 0
         ) {
           setHasUnacceptedOrder(true);
+         if (soundEnabled) {
+              playAlert();
+       }
 
-          if (soundEnabled && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch((err) => {
-              console.error("Audio play blocked:", err);
-            });
-          }
+
+          
         }
 
         previousOrderCountRef.current = data.length;
@@ -75,6 +74,32 @@ function Monitor() {
 
     return () => clearInterval(interval);
   }, [soundEnabled]);
+
+
+
+const playAlert = () => {
+  const playOnce = () => {
+    const audio = new Audio("/sounds/coffee_bell.wav");
+    audio.volume = 1.0;
+    audio.play().catch(console.error);
+  };
+
+  playOnce();
+
+  setTimeout(() => playOnce(), 250);
+  setTimeout(() => playOnce(), 500);
+};
+  useEffect(() => {
+  if (hasUnacceptedOrder && soundEnabled) {
+    playAlert();
+
+    const interval = setInterval(() => {
+      playAlert();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }
+}, [hasUnacceptedOrder, soundEnabled]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>

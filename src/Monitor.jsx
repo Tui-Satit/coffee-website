@@ -10,7 +10,7 @@ function Monitor() {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    audioRef.current = new Audio("/sounds/coffee_bell.wav");
+    audioRef.current = new Audio("/sounds/universfield-ringtone-020-365650.mp3");
   
     audioRef.current.volume = 1.0;
 

@@ -1,7 +1,7 @@
 const normalizeBaseUrl = (url = "") => url.replace(/\/+$/, "");
 
 const API_URL = normalizeBaseUrl(
-  process.env.REACT_APP_API_URL || "https://coffee-website-olive-seven.vercel.app"
+  process.env.REACT_APP_API_URL || "https://coffee-server-hazel.vercel.app"
 );
 
 export const apiConfig = {

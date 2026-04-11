@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getJson } from "./api";
+
+const ALERT_SOUND_SRC = "/sounds/universfield-ringtone-020-365650.mp3";
+const BURST_DELAYS_MS = [0, 180, 360];
+const REPEAT_ALERT_MS = 2500;
 
 function Monitor() {
   const [orders, setOrders] = useState([]);
@@ -7,29 +11,80 @@ function Monitor() {
   const [soundEnabled, setSoundEnabled] = useState(false);
 
   const previousOrderCountRef = useRef(0);
-  const audioRef = useRef(null);
+  const audioTemplateRef = useRef(null);
   const repeatIntervalRef = useRef(null);
-  
+  const burstTimeoutsRef = useRef([]);
+  const activeAudiosRef = useRef([]);
+
+  const clearBurstTimeouts = useCallback(() => {
+    burstTimeoutsRef.current.forEach((id) => clearTimeout(id));
+    burstTimeoutsRef.current = [];
+  }, []);
+
+  const stopAllAudio = useCallback(() => {
+    clearBurstTimeouts();
+
+    activeAudiosRef.current.forEach((audio) => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    activeAudiosRef.current = [];
+
+    if (audioTemplateRef.current) {
+      audioTemplateRef.current.pause();
+      audioTemplateRef.current.currentTime = 0;
+    }
+  }, [clearBurstTimeouts]);
+
+  const playAlertBurst = useCallback(() => {
+    if (!soundEnabled || !audioTemplateRef.current) return;
+
+    clearBurstTimeouts();
+
+    BURST_DELAYS_MS.forEach((delay) => {
+      const timeoutId = setTimeout(() => {
+        const alertAudio = audioTemplateRef.current.cloneNode();
+        alertAudio.volume = 1.0;
+        alertAudio.playbackRate = 1.1;
+
+        activeAudiosRef.current.push(alertAudio);
+
+        alertAudio
+          .play()
+          .catch((err) => console.error("Audio play failed:", err))
+          .finally(() => {
+            activeAudiosRef.current = activeAudiosRef.current.filter(
+              (audio) => audio !== alertAudio
+            );
+          });
+      }, delay);
+
+      burstTimeoutsRef.current.push(timeoutId);
+    });
+  }, [clearBurstTimeouts, soundEnabled]);
+
   useEffect(() => {
-    audioRef.current = new Audio("/sounds/universfield-ringtone-020-365650.mp3");
-  
-    audioRef.current.volume = 1.0;
+    const audio = new Audio(ALERT_SOUND_SRC);
+    audio.volume = 1.0;
+    audio.preload = "auto";
+    audioTemplateRef.current = audio;
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+      if (repeatIntervalRef.current) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
       }
+      stopAllAudio();
     };
-  }, []);
+  }, [stopAllAudio]);
 
   const enableSound = async () => {
     try {
-      if (!audioRef.current) return;
+      if (!audioTemplateRef.current) return;
 
-      await audioRef.current.play();
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      await audioTemplateRef.current.play();
+      audioTemplateRef.current.pause();
+      audioTemplateRef.current.currentTime = 0;
 
       setSoundEnabled(true);
       alert("เปิดเสียงแจ้งเตือนแล้ว");
@@ -42,10 +97,12 @@ function Monitor() {
   const handleAcceptOrder = () => {
     setHasUnacceptedOrder(false);
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (repeatIntervalRef.current) {
+      clearInterval(repeatIntervalRef.current);
+      repeatIntervalRef.current = null;
     }
+
+    stopAllAudio();
   };
 
   useEffect(() => {
@@ -58,12 +115,9 @@ function Monitor() {
           previousOrderCountRef.current !== 0
         ) {
           setHasUnacceptedOrder(true);
-         if (soundEnabled) {
-              playAlert();
-       }
-
-
-          
+          if (soundEnabled) {
+            playAlertBurst();
+          }
         }
 
         previousOrderCountRef.current = data.length;
@@ -74,47 +128,35 @@ function Monitor() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [soundEnabled]);
+  }, [playAlertBurst, soundEnabled]);
 
-const playAlert = () => {
-  const playOnce = (delay = 0) => {
-    setTimeout(() => {
-      const audio = new Audio("/sounds/universfield-ringtone-020-365650.mp3");
-      audio.volume = 1.0;
-      audio.playbackRate = 1.15;
-      audio.play().catch((err) => {
-        console.error("Audio play failed:", err);
-      });
-    }, delay);
-  };
+  useEffect(() => {
+    if (hasUnacceptedOrder && soundEnabled) {
+      playAlertBurst();
 
-  playOnce(0);
-  playOnce(180);
-  playOnce(360);
-};
+      if (repeatIntervalRef.current) {
+        clearInterval(repeatIntervalRef.current);
+      }
 
-useEffect(() => {
-  if (hasUnacceptedOrder && soundEnabled) {
-    playAlert();
-
-    if (repeatIntervalRef.current) {
-      clearInterval(repeatIntervalRef.current);
+      repeatIntervalRef.current = setInterval(() => {
+        playAlertBurst();
+      }, REPEAT_ALERT_MS);
+    } else {
+      if (repeatIntervalRef.current) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
+      }
+      stopAllAudio();
     }
 
-    repeatIntervalRef.current = setInterval(() => {
-      playAlert();
-    }, 2500);
-  }
+    return () => {
+      if (repeatIntervalRef.current) {
+        clearInterval(repeatIntervalRef.current);
+        repeatIntervalRef.current = null;
+      }
+    };
+  }, [hasUnacceptedOrder, playAlertBurst, soundEnabled, stopAllAudio]);
 
-  return () => {
-    if (repeatIntervalRef.current) {
-      clearInterval(repeatIntervalRef.current);
-      repeatIntervalRef.current = null;
-    }
-  };
-}, [hasUnacceptedOrder, soundEnabled]);
-
- 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
       <button

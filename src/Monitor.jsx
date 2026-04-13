@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getJson } from "./api";
+import { ref, onChildAdded } from "firebase/database";
+import { db } from "./firebase";
 
 const ALERT_SOUND_SRC = "/alert.mp3";
 const BURST_DELAYS_MS = [0, 180, 360];
@@ -10,12 +11,12 @@ function Monitor() {
   const [hasUnacceptedOrder, setHasUnacceptedOrder] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
 
-  const previousOrderCountRef = useRef(0);
   const audioTemplateRef = useRef(null);
   const repeatIntervalRef = useRef(null);
   const burstTimeoutsRef = useRef([]);
   const activeAudiosRef = useRef([]);
- 
+  const initialLoadDoneRef = useRef(false);
+
   const clearBurstTimeouts = useCallback(() => {
     burstTimeoutsRef.current.forEach((id) => clearTimeout(id));
     burstTimeoutsRef.current = [];
@@ -106,29 +107,38 @@ function Monitor() {
   };
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const data = await getJson("/orders");
+    const ordersRef = ref(db, "orders");
+    let firstSnapshot = true;
 
-        if (
-          data.length > previousOrderCountRef.current &&
-          previousOrderCountRef.current !== 0
-        ) {
-          setHasUnacceptedOrder(true);
-          if (soundEnabled) {
-            playAlertBurst();
-          }
-        }
+    const unsubscribe = onChildAdded(ordersRef, (snapshot) => {
+      const newOrder = {
+        id: snapshot.key,
+        ...snapshot.val(),
+      };
 
-        previousOrderCountRef.current = data.length;
-        setOrders(data);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
+      setOrders((prev) => {
+        const exists = prev.some((order) => order.id === newOrder.id);
+        if (exists) return prev;
+        return [newOrder, ...prev];
+      });
+
+      if (firstSnapshot && !initialLoadDoneRef.current) {
+        return;
       }
-    }, 2000);
 
-    return () => clearInterval(interval);
-  }, [playAlertBurst, soundEnabled]);
+      setHasUnacceptedOrder(true);
+    });
+
+    const markLoaded = setTimeout(() => {
+      initialLoadDoneRef.current = true;
+      firstSnapshot = false;
+    }, 1000);
+
+    return () => {
+      clearTimeout(markLoaded);
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (hasUnacceptedOrder && soundEnabled) {
@@ -213,37 +223,45 @@ function Monitor() {
       {orders.length === 0 ? (
         <p>ยังไม่มีออเดอร์</p>
       ) : (
-        orders.map((o, i) => (
-          <div
-            key={i}
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "12px",
-              padding: "14px",
-              marginBottom: "12px",
-              background: "#fff8f0",
-            }}
-          >
-            <div style={{ fontSize: "20px", fontWeight: "bold" }}>
-              👤 {o.customerName || "ไม่ระบุชื่อ"}
-            </div>
+        orders.map((o) => {
+          const itemsArray = Array.isArray(o.items)
+            ? o.items
+            : o.items
+            ? Object.values(o.items)
+            : [];
 
-            <div>🕒 เวลารับ: {o.pickupTime || "-"}</div>
-            <div>📝 หมายเหตุ: {o.note || "-"}</div>
-            <div>💵 ราคารวม: {o.totalPrice || "-"} บาท</div>
-
-            {o.items && o.items.length > 0 && (
-              <div style={{ marginTop: "10px" }}>
-                <strong>☕ รายการ:</strong>
-                {o.items.map((item, index) => (
-                  <div key={index}>
-                    - {item.name} ({item.temperature || "Cold"}) x {item.qty}
-                  </div>
-                ))}
+          return (
+            <div
+              key={o.id}
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: "12px",
+                padding: "14px",
+                marginBottom: "12px",
+                background: "#fff8f0",
+              }}
+            >
+              <div style={{ fontSize: "20px", fontWeight: "bold" }}>
+                👤 {o.customerName || "ไม่ระบุชื่อ"}
               </div>
-            )}
-          </div>
-        ))
+
+              <div>🕒 เวลารับ: {o.pickupTime || "-"}</div>
+              <div>📝 หมายเหตุ: {o.note || "-"}</div>
+              <div>💵 ราคารวม: {o.totalPrice || "-"} บาท</div>
+
+              {itemsArray.length > 0 && (
+                <div style={{ marginTop: "10px" }}>
+                  <strong>☕ รายการ:</strong>
+                  {itemsArray.map((item, index) => (
+                    <div key={index}>
+                      - {item.name} ({item.temperature || "Cold"}) x {item.qty}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })
       )}
     </div>
   );

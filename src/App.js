@@ -1,13 +1,15 @@
 import React, { useMemo, useRef, useState } from "react";
 import "./App.css";
 import { postJson } from "./api";
+import { db } from "./firebase";
+import { ref, push, set } from "firebase/database";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
 const TEMPERATURE_LABELS = {
-  Cold: "❄️ Cold",
-  Hot: "🔥 Hot",
+  Cold: "❄️ เย็น",
+  Hot: "🔥 ร้อน"
 };
 
 const menu = [
@@ -68,6 +70,42 @@ const menuWithTemperatureOptions = menu.map((item) => ({
 
 function App() {
   const [cart, setCart] = useState([]);
+  const submitOrderToFirebase = async () => {
+   console.log("clicked submitOrderToFirebase");
+   console.log("customerName =", customerName);
+   console.log("cart =", cart);
+
+  if (!customerName.trim()) {
+    alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+    return;
+  }
+
+  if (cart.length === 0) {
+    alert("กรุณาเลือกเมนูก่อน");
+    return;
+  }
+
+  try {
+    const ordersRef = ref(db, "orders");
+    const newOrderRef = push(ordersRef);
+
+    await set(newOrderRef, {
+      customerName: customerName.trim(),
+      items: cart,
+      totalItems: cart.reduce((sum, item) => sum + item.qty, 0),
+      totalPrice: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
+      createdAt: Date.now(),
+      status: "new"
+    });
+    
+      console.log("order saved to firebase");
+    alert("ส่งออเดอร์เรียบร้อยแล้ว ✅");
+  } catch (error) {
+    console.error("Error sending order:", error);
+    alert("ส่งออเดอร์ไม่สำเร็จ");
+  }
+};
+  
   const [addedItemState, setAddedItemState] = useState({});
   const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
     menuWithTemperatureOptions.reduce(
@@ -111,6 +149,12 @@ function App() {
       return [...prev, { ...item, qty: 1, sugar, temperature }];
     });
   };
+
+  const testFirebase = () => {
+  set(ref(db, "test"), {
+    message: "Hello from Tui Cafe ☕🔥"
+  });
+};
 
   const handleAddToCart = (item) => {
     addToCart(item);
@@ -197,7 +241,16 @@ function App() {
   };
 
   return (
+    
     <div className="app">
+      <div>
+    <h1>Tui Cafe</h1>
+
+    <button onClick={testFirebase}>
+      🔥 Test Firebase
+    </button>
+
+  </div>
       <header className="shop-sticky-header">
         <div className="shop-pill">กาแฟคุณตุ่ย</div>
       </header>
@@ -241,6 +294,8 @@ function App() {
                       <option key={option} value={option}>
                         {TEMPERATURE_LABELS[option] || option}
                       </option>
+
+                    
                     ))}
                   </select>
                 </label>
@@ -392,10 +447,17 @@ function App() {
             ))}
           </div>
         </div>
-
-        <button className="line-order-btn" onClick={sendOrderToLine} disabled={!isOrderReady}>
-          ส่งออเดอร์ผ่าน LINE
-        </button>
+      <button
+  type="button"
+  className="line-order-btn"
+  onClick={() => {
+    console.log("🔥 BUTTON CLICKED");
+    submitOrderToFirebase();
+  }}
+>
+  ส่งออเดอร์ผ่าน LINE
+</button>
+     
       </section>
     </div>
   );

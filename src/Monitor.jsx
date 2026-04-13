@@ -3,8 +3,8 @@ import { ref, onChildAdded } from "firebase/database";
 import { db } from "./firebase";
 
 const ALERT_SOUND_SRC = "/alert.mp3";
-const BURST_DELAYS_MS = [0, 180, 360];
-const REPEAT_ALERT_MS = 2500;
+const BURST_DELAYS_MS = [0, 90, 180, 270, 360, 450];
+const REPEAT_ALERT_MS = 1200;
 
 function Monitor() {
   const [orders, setOrders] = useState([]);
@@ -46,18 +46,13 @@ function Monitor() {
       const timeoutId = setTimeout(() => {
         const alertAudio = audioTemplateRef.current.cloneNode();
         alertAudio.volume = 1.0;
-        alertAudio.playbackRate = 1.1;
+        alertAudio.playbackRate = 1.2;
 
         activeAudiosRef.current.push(alertAudio);
 
-        alertAudio
-          .play()
-          .catch((err) => console.error("Audio play failed:", err))
-          .finally(() => {
-            activeAudiosRef.current = activeAudiosRef.current.filter(
-              (audio) => audio !== alertAudio
-            );
-          });
+        alertAudio.play().catch((err) => {
+          console.error("Audio play failed:", err);
+        });
       }, delay);
 
       burstTimeoutsRef.current.push(timeoutId);

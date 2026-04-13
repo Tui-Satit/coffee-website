@@ -1,9 +1,8 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import "./App.css";
-import { postJson } from "./api";
 import { db } from "./firebase";
 import { ref, push, set } from "firebase/database";
-import ShopPanel from "./ShopPanel";
+
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
@@ -124,7 +123,7 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [nameValidationNotice, setNameValidationNotice] = useState(false);
-  const nameInputRef = useRef(null);
+  
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
@@ -151,12 +150,7 @@ function App() {
     });
   };
 
-  const testFirebase = () => {
-  set(ref(db, "test"), {
-    message: "Hello from Tui Cafe ☕🔥"
-  });
-};
-
+ 
   const handleAddToCart = (item) => {
     addToCart(item);
     setAddedItemState((prev) => ({ ...prev, [item.id]: true }));
@@ -209,14 +203,7 @@ function App() {
   return (
     
     <div className="app">
-      <div>
-    <h1>Tui Cafe</h1>
-
-    <button onClick={testFirebase}>
-      🔥 Test Firebase
-    </button>
-
-  </div>
+      
       <header className="shop-sticky-header">
         <div className="shop-pill">กาแฟคุณตุ่ย</div>
       </header>
@@ -334,7 +321,7 @@ function App() {
           <label className="field">
             <span>ชื่อลูกค้า</span>
            <input
-  ref={nameInputRef}
+  
   type="text"
   placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
   className={nameValidationNotice ? "error-input" : ""}
@@ -428,4 +415,4 @@ function App() {
   );
 }
 
-export default ShopPanel;
+export default App;

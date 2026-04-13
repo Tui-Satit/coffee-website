@@ -3,6 +3,7 @@ import "./App.css";
 import { postJson } from "./api";
 import { db } from "./firebase";
 import { ref, push, set } from "firebase/database";
+import ShopPanel from "./ShopPanel";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
@@ -463,4 +464,4 @@ function App() {
   );
 }
 
-export default App;
+export default ShopPanel;

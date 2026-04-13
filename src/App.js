@@ -3,13 +3,12 @@ import "./App.css";
 import { db } from "./firebase";
 import { ref, push, set } from "firebase/database";
 
-
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
 const TEMPERATURE_LABELS = {
   Cold: "❄️ เย็น",
-  Hot: "🔥 ร้อน"
+  Hot: "🔥 ร้อน",
 };
 
 const menu = [
@@ -70,42 +69,6 @@ const menuWithTemperatureOptions = menu.map((item) => ({
 
 function App() {
   const [cart, setCart] = useState([]);
-  const submitOrderToFirebase = async () => {
-   console.log("clicked submitOrderToFirebase");
-   console.log("customerName =", customerName);
-   console.log("cart =", cart);
-
-  if (!customerName.trim()) {
-    alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
-    return;
-  }
-
-  if (cart.length === 0) {
-    alert("กรุณาเลือกเมนูก่อน");
-    return;
-  }
-
-  try {
-    const ordersRef = ref(db, "orders");
-    const newOrderRef = push(ordersRef);
-
-    await set(newOrderRef, {
-      customerName: customerName.trim(),
-      items: cart,
-      totalItems: cart.reduce((sum, item) => sum + item.qty, 0),
-      totalPrice: cart.reduce((sum, item) => sum + item.price * item.qty, 0),
-      createdAt: Date.now(),
-      status: "new"
-    });
-    
-      console.log("order saved to firebase");
-    alert("ส่งออเดอร์เรียบร้อยแล้ว ✅");
-  } catch (error) {
-    console.error("Error sending order:", error);
-    alert("ส่งออเดอร์ไม่สำเร็จ");
-  }
-};
-  
   const [addedItemState, setAddedItemState] = useState({});
   const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
     menuWithTemperatureOptions.reduce(
@@ -113,22 +76,27 @@ function App() {
       {}
     )
   );
-  const [selectedTemperatureByItem, setSelectedTemperatureByItem] = useState(() =>
-    menuWithTemperatureOptions.reduce(
-      (acc, item) => ({ ...acc, [item.id]: item.temperatureOptions?.[0] || "Cold" }),
-      {}
-    )
+  const [selectedTemperatureByItem, setSelectedTemperatureByItem] = useState(
+    () =>
+      menuWithTemperatureOptions.reduce(
+        (acc, item) => ({
+          ...acc,
+          [item.id]: item.temperatureOptions?.[0] || "Cold",
+        }),
+        {}
+      )
   );
   const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [nameValidationNotice, setNameValidationNotice] = useState(false);
-  
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
     const temperature =
-      selectedTemperatureByItem[item.id] || item.temperatureOptions?.[0] || "Cold";
+      selectedTemperatureByItem[item.id] ||
+      item.temperatureOptions?.[0] ||
+      "Cold";
 
     if (!sugar) {
       alert("กรุณาเลือกระดับความหวานก่อนเพิ่มลงตะกร้า");
@@ -137,23 +105,30 @@ function App() {
 
     setCart((prev) => {
       const found = prev.find(
-        (p) => p.id === item.id && p.sugar === sugar && p.temperature === temperature
+        (p) =>
+          p.id === item.id &&
+          p.sugar === sugar &&
+          p.temperature === temperature
       );
+
       if (found) {
         return prev.map((p) =>
-          p.id === item.id && p.sugar === sugar && p.temperature === temperature
+          p.id === item.id &&
+          p.sugar === sugar &&
+          p.temperature === temperature
             ? { ...p, qty: p.qty + 1 }
             : p
         );
       }
+
       return [...prev, { ...item, qty: 1, sugar, temperature }];
     });
   };
 
- 
   const handleAddToCart = (item) => {
     addToCart(item);
     setAddedItemState((prev) => ({ ...prev, [item.id]: true }));
+
     setTimeout(() => {
       setAddedItemState((prev) => ({ ...prev, [item.id]: false }));
     }, 1000);
@@ -168,7 +143,9 @@ function App() {
     setCart((prev) =>
       prev
         .map((item) =>
-          item.id === id && item.sugar === sugar && item.temperature === temperature
+          item.id === id &&
+          item.sugar === sugar &&
+          item.temperature === temperature
             ? { ...item, qty: Math.max(0, item.qty + change) }
             : item
         )
@@ -187,7 +164,6 @@ function App() {
   );
 
   const totalPrice = subtotal;
- 
 
   const summaryRows = [
     { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
@@ -195,15 +171,75 @@ function App() {
     { label: "หมายเหตุ", value: note.trim() || "-" },
   ];
 
-  
+  const submitOrderToFirebase = async () => {
+    console.log("clicked submitOrderToFirebase");
+    console.log("customerName =", customerName);
+    console.log("cart =", cart);
 
-  // Delete to here !
+    if (!customerName.trim()) {
+      setNameValidationNotice(true);
+      alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+      return;
+    }
 
+    if (cart.length === 0) {
+      alert("กรุณาเลือกเมนูก่อน");
+      return;
+    }
+
+    try {
+      const ordersRef = ref(db, "orders");
+      const newOrderRef = push(ordersRef);
+
+      const finalTotalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+      const finalTotalPrice = cart.reduce(
+        (sum, item) => sum + item.price * item.qty,
+        0
+      );
+
+      await set(newOrderRef, {
+        customerName: customerName.trim(),
+        note: note.trim(),
+        pickupTime: PICKUP_MESSAGE,
+        items: cart,
+        totalItems: finalTotalItems,
+        totalPrice: finalTotalPrice,
+        createdAt: Date.now(),
+        status: "new",
+      });
+
+      console.log("order saved to firebase");
+
+      const orderText = [
+        "☕ ออเดอร์ใหม่",
+        `ชื่อลูกค้า: ${customerName.trim()}`,
+        `บริการ: ${PICKUP_MESSAGE}`,
+        `หมายเหตุ: ${note.trim() || "-"}`,
+        "",
+        ...cart.map(
+          (item) =>
+            `- ${item.name} (${item.temperature || "Cold"} • ${
+              item.sugar || "-"
+            }) x${item.qty} = ฿${item.price * item.qty}`
+        ),
+        "",
+        `รวม ${finalTotalItems} แก้ว`,
+        `รวมเงิน ฿${finalTotalPrice}`,
+      ].join("\n");
+
+      const lineUrl = `https://line.me/R/oaMessage/@575kncik/?text=${encodeURIComponent(
+        orderText
+      )}`;
+
+      window.location.href = lineUrl;
+    } catch (error) {
+      console.error("Error sending order:", error);
+      alert("ส่งออเดอร์ไม่สำเร็จ");
+    }
+  };
 
   return (
-    
     <div className="app">
-      
       <header className="shop-sticky-header">
         <div className="shop-pill">กาแฟคุณตุ่ย</div>
       </header>
@@ -247,8 +283,6 @@ function App() {
                       <option key={option} value={option}>
                         {TEMPERATURE_LABELS[option] || option}
                       </option>
-
-                    
                     ))}
                   </select>
                 </label>
@@ -277,7 +311,10 @@ function App() {
                     <span className="price-label">ราคา</span>
                     <strong>฿{item.price}</strong>
                   </div>
-                  <button className="add-btn" onClick={() => handleAddToCart(item)}>
+                  <button
+                    className="add-btn"
+                    onClick={() => handleAddToCart(item)}
+                  >
                     {addedItemState[item.id] ? "✓ เพิ่มแล้ว" : "+ เพิ่มลงตะกร้า"}
                   </button>
                 </div>
@@ -288,18 +325,18 @@ function App() {
       </main>
 
       {totalItems > 0 && (
-        <>
-          <button type="button" className="cart-bar" onClick={handleViewOrder}>
-            <span className="cart-bar-left">
-              <strong>{totalItems} รายการ</strong>
-              <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
-            </span>
-            <span className="cart-bar-price">฿{totalPrice}</span>
-          </button>
-        </>
+        <button type="button" className="cart-bar" onClick={handleViewOrder}>
+          <span className="cart-bar-left">
+            <strong>{totalItems} รายการ</strong>
+            <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
+          </span>
+          <span className="cart-bar-price">฿{totalPrice}</span>
+        </button>
       )}
 
-      {cartOpen && <div className="cart-overlay" onClick={() => setCartOpen(false)}></div>}
+      {cartOpen && (
+        <div className="cart-overlay" onClick={() => setCartOpen(false)}></div>
+      )}
 
       <section className={`cart-drawer ${cartOpen ? "open" : ""}`}>
         <div className="drawer-handle"></div>
@@ -320,22 +357,23 @@ function App() {
 
           <label className="field">
             <span>ชื่อลูกค้า</span>
-           <input
-  
-  type="text"
-  placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
-  className={nameValidationNotice ? "error-input" : ""}
-  value={customerName}
-  onChange={(e) => {
-    setCustomerName(e.target.value);
-    if (nameValidationNotice) {
-      setNameValidationNotice(false);
-    }
-  }}
-/>
+            <input
+              type="text"
+              placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
+              className={nameValidationNotice ? "error-input" : ""}
+              value={customerName}
+              onChange={(e) => {
+                setCustomerName(e.target.value);
+                if (nameValidationNotice) {
+                  setNameValidationNotice(false);
+                }
+              }}
+            />
           </label>
 
-          {nameValidationNotice && <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}
+          {nameValidationNotice && (
+            <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>
+          )}
 
           <label className="field">
             <span>หมายเหตุถึงร้าน</span>
@@ -350,7 +388,10 @@ function App() {
 
         <div className="drawer-items">
           {cart.map((item) => (
-            <div className="drawer-item" key={`${item.id}-${item.sugar}-${item.temperature}`}>
+            <div
+              className="drawer-item"
+              key={`${item.id}-${item.sugar}-${item.temperature}`}
+            >
               <div className="drawer-item-left">
                 <img src={item.image} alt={item.name} className="drawer-thumb" />
                 <div>
@@ -359,17 +400,26 @@ function App() {
                     {item.temperature} • {item.sugar}
                   </p>
                   <p>
-                    ฿{item.price} × {item.qty} = <strong>฿{item.price * item.qty}</strong>
+                    ฿{item.price} × {item.qty} ={" "}
+                    <strong>฿{item.price * item.qty}</strong>
                   </p>
                 </div>
               </div>
 
               <div className="qty-box">
-                <button onClick={() => updateQty(item.id, item.sugar, item.temperature, -1)}>
+                <button
+                  onClick={() =>
+                    updateQty(item.id, item.sugar, item.temperature, -1)
+                  }
+                >
                   -
                 </button>
                 <span>{item.qty}</span>
-                <button onClick={() => updateQty(item.id, item.sugar, item.temperature, 1)}>
+                <button
+                  onClick={() =>
+                    updateQty(item.id, item.sugar, item.temperature, 1)
+                  }
+                >
                   +
                 </button>
               </div>
@@ -400,16 +450,14 @@ function App() {
             ))}
           </div>
         </div>
-      <button
-  type="button"
-  className="line-order-btn"
-  onClick={
-    submitOrderToFirebase
-  }
->
-  ส่งออเดอร์ผ่าน LINE
-</button>
-     
+
+        <button
+          type="button"
+          className="line-order-btn"
+          onClick={submitOrderToFirebase}
+        >
+          ส่งออเดอร์ผ่าน LINE
+        </button>
       </section>
     </div>
   );

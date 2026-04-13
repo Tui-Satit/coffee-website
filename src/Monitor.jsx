@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getJson } from "./api";
 
-const ALERT_SOUND_SRC = "/sounds/universfield-ringtone-020-365650.mp3";
+const ALERT_SOUND_SRC = "/alert.mp3";
 const BURST_DELAYS_MS = [0, 180, 360];
 const REPEAT_ALERT_MS = 2500;
 
@@ -15,7 +15,7 @@ function Monitor() {
   const repeatIntervalRef = useRef(null);
   const burstTimeoutsRef = useRef([]);
   const activeAudiosRef = useRef([]);
-
+ 
   const clearBurstTimeouts = useCallback(() => {
     burstTimeoutsRef.current.forEach((id) => clearTimeout(id));
     burstTimeoutsRef.current = [];

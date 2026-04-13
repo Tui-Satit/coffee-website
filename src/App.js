@@ -193,7 +193,7 @@ function App() {
   );
 
   const totalPrice = subtotal;
-  const isOrderReady = Boolean(cart.length);
+ 
 
   const summaryRows = [
     { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
@@ -201,45 +201,10 @@ function App() {
     { label: "หมายเหตุ", value: note.trim() || "-" },
   ];
 
-  const sendOrderToLine = async () => {
-    if (cart.length === 0) {
-      alert("Please add items first");
-      return;
-    }
+  
 
-    if (!customerName.trim()) {
-      setNameValidationNotice(true);
-      nameInputRef.current?.focus();
-      return;
-    }
+  // Delete to here !
 
-    setNameValidationNotice(false);
-
-    const orderData = {
-      customerName,
-      note,
-      items: cart,
-      totalPrice: totalPrice,
-    };
-
-    try {
-      const data = await postJson("/send-order", orderData);
-
-      if (data.success) {
-        alert("ส่งออเดอร์เรียบร้อย ✅");
-        setCart([]);
-        setCustomerName("");
-        setNote("");
-        setCartOpen(false);
-      } else {
-        alert("ส่งไม่สำเร็จ: " + JSON.stringify(data.error));
-        console.log("SERVER ERROR:", data.error);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
-    }
-  };
 
   return (
     
@@ -451,10 +416,9 @@ function App() {
       <button
   type="button"
   className="line-order-btn"
-  onClick={() => {
-    console.log("🔥 BUTTON CLICKED");
-    submitOrderToFirebase();
-  }}
+  onClick={
+    submitOrderToFirebase
+  }
 >
   ส่งออเดอร์ผ่าน LINE
 </button>

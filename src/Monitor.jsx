@@ -45,8 +45,15 @@ function Monitor() {
     BURST_DELAYS_MS.forEach((delay) => {
       const timeoutId = setTimeout(() => {
         const alertAudio = audioTemplateRef.current.cloneNode();
-        alertAudio.volume = 1.0;
-        alertAudio.playbackRate = 1.2;
+
+// 👇 เพิ่ม/แก้ตรงนี้
+alertAudio.volume = 1.0;
+alertAudio.muted = false;
+alertAudio.playbackRate = 1.3;
+if (navigator.vibrate) {
+  navigator.vibrate([200, 100, 200]);
+}
+
 
         activeAudiosRef.current.push(alertAudio);
 

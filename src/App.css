@@ -248,14 +248,28 @@ button {
 .cart-bar-hint {
   margin-top: 6px;
   display: inline-block;
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 12px;
-  background: #fff8f0;
-  box-shadow: 0 4px 10px rgba(17, 24, 39, 0.08);
-  color: #4b5563;
+  border: 1px solid #eadccf;
+  background: #fcf4ea;
+  box-shadow: 0 3px 10px rgba(111, 78, 55, 0.12);
+  color: #3f332a;
   font-size: 13px;
+  font-weight: 500;
   line-height: 1.35;
   pointer-events: none;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (hover: hover) {
+  .cart-bar:hover .cart-bar-hint {
+    background: #f8ecdf;
+    box-shadow: 0 4px 12px rgba(111, 78, 55, 0.16);
+  }
+}
+
+.cart-bar:active .cart-bar-hint {
+  background: #f4e5d5;
 }
 
 .cart-bar-price {

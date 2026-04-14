@@ -247,7 +247,10 @@ button {
 
 .cart-bar-hint {
   margin-top: 6px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 7px 12px;
   border-radius: 12px;
   border: 1px solid #eadccf;
@@ -255,10 +258,16 @@ button {
   box-shadow: 0 3px 10px rgba(111, 78, 55, 0.12);
   color: #3f332a;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.35;
+  text-align: center;
   pointer-events: none;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.12s ease;
+}
+
+.cart-bar-hint-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 @media (hover: hover) {
@@ -269,7 +278,8 @@ button {
 }
 
 .cart-bar:active .cart-bar-hint {
-  background: #f4e5d5;
+  background: #f1e0ce;
+  transform: scale(0.98);
 }
 
 .cart-bar-price {

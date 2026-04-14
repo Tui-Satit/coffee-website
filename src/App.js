@@ -173,20 +173,38 @@ function App() {
   ];
 
   const createLineOrderLink = () => {
-    const orderItemsText = cart
-      .map((item) => `🧾 ${item.name} x${item.qty} = ฿${item.price * item.qty}`)
-      .join("\n");
+    const orderItemLines = cart.map((item) => {
+      const temperature =
+        item.temperature === "Cold"
+          ? "เย็น"
+          : item.temperature === "Hot"
+            ? "ร้อน"
+            : item.temperature;
 
-    const message = [
-      "☕ New Coffee Order",
+      return `• ${item.name} (${temperature} • ${item.sugar}) x${item.qty} = ฿${
+        item.price * item.qty
+      }`;
+    });
+
+    const orderText = [
+      "🔊 ออเดอร์ใหม่เข้าร้าน!",
       "",
-      orderItemsText,
+      `👤 ชื่อลูกค้า: ${customerName.trim() || "-"}`,
+      `📅 รับสินค้า: ${PICKUP_MESSAGE}`,
+      `📝 หมายเหตุ: ${note.trim() || "-"}`,
       "",
-      `📦 Total Items: ${totalItems}`,
-      `💰 Total Price: ฿${totalPrice}`,
+      "──────────────",
+      "☕ รายการสั่ง",
+      ...orderItemLines,
+      "──────────────",
+      "",
+      `🧾 จำนวนรวม: ${totalItems} แก้ว`,
+      `💰 ยอดรวม: ฿${totalPrice}`,
+      "",
+      "⏰ กรุณาเตรียมออเดอร์ทันที",
     ].join("\n");
 
-    return `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?${encodeURIComponent(message)}`;
+    return `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?${encodeURIComponent(orderText)}`;
   };
 
   const submitOrderToFirebase = async () => {

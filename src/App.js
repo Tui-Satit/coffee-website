@@ -210,28 +210,33 @@ function App() {
 
       console.log("order saved to firebase");
 
-      const orderText = [
-        "☕ ออเดอร์ใหม่",
-        `ชื่อลูกค้า: ${customerName.trim()}`,
-        `บริการ: ${PICKUP_MESSAGE}`,
-        `หมายเหตุ: ${note.trim() || "-"}`,
-        "",
-        ...cart.map(
-          (item) =>
-            `- ${item.name} (${item.temperature || "Cold"} • ${
-              item.sugar || "-"
-            }) x${item.qty} = ฿${item.price * item.qty}`
-        ),
-        "",
-        `รวม ${finalTotalItems} แก้ว`,
-        `รวมเงิน ฿${finalTotalPrice}`,
-      ].join("\n");
+ const orderText = [
+  "📢 ออเดอร์ใหม่เข้าร้าน!",
+  "",
+  `👤 ชื่อลูกค้า: ${customerName.trim()}`,
+  `🏪 รับสินค้า: ${PICKUP_MESSAGE}`,
+  `📝 หมายเหตุ: ${note.trim() || "-"}`,
+  "",
+  "━━━━━━━━━━━━━━",
+  "☕ รายการสั่ง",
+  ...cart.map(
+    (item) =>
+      `• ${item.name} (${item.temperature === "Cold" ? "เย็น" : "ร้อน"} • ${
+        item.sugar || "-"
+      }) x${item.qty} = ฿${item.price * item.qty}`
+  ),
+  "━━━━━━━━━━━━━━",
+  "",
+  `🧾 จำนวนรวม: ${finalTotalItems} แก้ว`,
+  `💰 ยอดรวม: ฿${finalTotalPrice}`,
+  "",
+  "⏰ กรุณาเตรียมออเดอร์ทันที",
+].join("\n");
 
-      const lineUrl = `https://line.me/R/oaMessage/@575kncik/?text=${encodeURIComponent(
-        orderText
-      )}`;
+const lineUrl = `https://line.me/R/oaMessage/@575kncik/?${encodeURIComponent(orderText)}`;
 
-      window.location.href = lineUrl;
+window.location.href = lineUrl;
+     
     } catch (error) {
       console.error("Error sending order:", error);
       alert("ส่งออเดอร์ไม่สำเร็จ");

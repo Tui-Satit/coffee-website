@@ -226,7 +226,7 @@ if (navigator.vibrate) {
               cursor: "pointer",
             }}
           >
-            ✅ รับออเดอร์แล้ว
+            ✅ กดรับออเดอร์
           </button>
         </div>
       )}

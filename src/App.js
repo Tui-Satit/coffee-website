@@ -4,6 +4,7 @@ import { db } from "./firebase";
 import { ref, push, set } from "firebase/database";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
+const SHOP_LINE_ID = "@575kncik";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
 const TEMPERATURE_LABELS = {
@@ -171,6 +172,22 @@ function App() {
     { label: "หมายเหตุ", value: note.trim() || "-" },
   ];
 
+  const createLineOrderLink = () => {
+    const orderItemsText = cart
+      .map((item) => `🧾 ${item.name} x${item.qty} = ฿${item.price * item.qty}\n`)
+      .join("\n");
+
+    const message = [
+      "☕ New Coffee Order",
+      "",
+      orderItemsText,
+      `📦 Total Items: ${totalItems}`,
+      `💰 Total Price: ฿${totalPrice}`,
+    ].join("\n");
+
+    return `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?${encodeURIComponent(message)}`;
+  };
+
   const submitOrderToFirebase = async () => {
     console.log("clicked submitOrderToFirebase");
     console.log("customerName =", customerName);
@@ -210,32 +227,8 @@ function App() {
 
       console.log("order saved to firebase");
 
- const orderText = [
-  "📢 ออเดอร์ใหม่เข้าร้าน!",
-  "",
-  `👤 ชื่อลูกค้า: ${customerName.trim()}`,
-  `🏪 รับสินค้า: ${PICKUP_MESSAGE}`,
-  `📝 หมายเหตุ: ${note.trim() || "-"}`,
-  "",
-  "━━━━━━━━━━━━━━",
-  "☕ รายการสั่ง",
-  ...cart.map(
-    (item) =>
-      `• ${item.name} (${item.temperature === "Cold" ? "เย็น" : "ร้อน"} • ${
-        item.sugar || "-"
-      }) x${item.qty} = ฿${item.price * item.qty}`
-  ),
-  "━━━━━━━━━━━━━━",
-  "",
-  `🧾 จำนวนรวม: ${finalTotalItems} แก้ว`,
-  `💰 ยอดรวม: ฿${finalTotalPrice}`,
-  "",
-  "⏰ กรุณาเตรียมออเดอร์ทันที",
-].join("\n");
-
-const lineUrl = `https://line.me/R/oaMessage/@575kncik/?${encodeURIComponent(orderText)}`;
-
-window.location.href = lineUrl;
+      const lineUrl = createLineOrderLink();
+      window.location.href = lineUrl;
      
     } catch (error) {
       console.error("Error sending order:", error);

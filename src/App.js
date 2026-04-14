@@ -358,25 +358,37 @@ function App() {
           <h3 className="card-title">รายละเอียดการสั่งซื้อ</h3>
           <p className="pickup-pill">{PICKUP_MESSAGE}</p>
 
-          <label className="field">
-            <span>ชื่อลูกค้า</span>
-            <input
-              type="text"
-              placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
-              className={nameValidationNotice ? "error-input" : ""}
-              value={customerName}
-              onChange={(e) => {
-                setCustomerName(e.target.value);
-                if (nameValidationNotice) {
-                  setNameValidationNotice(false);
-                }
-              }}
-            />
-          </label>
+          <label className="field customer-name-field">
+            <span className="field-label-with-icon">
+              <span className="field-label-icon" aria-hidden="true">
+                👤
+              </span>
+              <span>ชื่อลูกค้า</span>
+            </span>
+            <div className={`input-with-icon ${nameValidationNotice ? "error-input" : ""}`}>
+              <span className="input-icon" aria-hidden="true">
+                👤
+              </span>
+              <input
+                type="text"
+                placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
+                value={customerName}
+                onChange={(e) => {
+                  const nextName = e.target.value;
+                  setCustomerName(nextName);
+                  if (nameValidationNotice && nextName.trim()) {
+                    setNameValidationNotice(false);
+                  }
+                }}
+              />
+            </div>
 
-          {nameValidationNotice && (
-            <p className="error-text">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>
-          )}
+            {nameValidationNotice && (
+              <p className="error-text" role="alert">
+                กรุณากรอกชื่อคุณก่อนส่งออเดอร์
+              </p>
+            )}
+          </label>
 
           <label className="field">
             <span>หมายเหตุถึงร้าน</span>

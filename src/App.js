@@ -174,13 +174,14 @@ function App() {
 
   const createLineOrderLink = () => {
     const orderItemsText = cart
-      .map((item) => `🧾 ${item.name} x${item.qty} = ฿${item.price * item.qty}\n`)
+      .map((item) => `🧾 ${item.name} x${item.qty} = ฿${item.price * item.qty}`)
       .join("\n");
 
     const message = [
       "☕ New Coffee Order",
       "",
       orderItemsText,
+      "",
       `📦 Total Items: ${totalItems}`,
       `💰 Total Price: ฿${totalPrice}`,
     ].join("\n");

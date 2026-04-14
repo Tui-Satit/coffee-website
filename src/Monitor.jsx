@@ -81,21 +81,24 @@ if (navigator.vibrate) {
     };
   }, [stopAllAudio]);
 
-  const enableSound = async () => {
-    try {
-      if (!audioTemplateRef.current) return;
+ const enableSound = async () => {
+  try {
+    if (!audioTemplateRef.current) return;
 
-      await audioTemplateRef.current.play();
-      audioTemplateRef.current.pause();
-      audioTemplateRef.current.currentTime = 0;
+    audioTemplateRef.current.volume = 1.0;
+    audioTemplateRef.current.muted = false;
+    audioTemplateRef.current.currentTime = 0;
 
-      setSoundEnabled(true);
-      alert("เปิดเสียงแจ้งเตือนแล้ว");
-    } catch (err) {
-      console.error("Enable sound failed:", err);
-      alert("ไม่สามารถเปิดเสียงได้");
-    }
-  };
+    await audioTemplateRef.current.play();
+    audioTemplateRef.current.pause();
+    audioTemplateRef.current.currentTime = 0;
+
+    setSoundEnabled(true);
+  } catch (err) {
+    console.error("Enable sound failed:", err);
+    setSoundEnabled(false);
+  }
+};
 
   const handleAcceptOrder = () => {
     setHasUnacceptedOrder(false);
@@ -171,21 +174,27 @@ if (navigator.vibrate) {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <button
-        onClick={enableSound}
-        style={{
-          padding: "12px 18px",
-          fontSize: "18px",
-          marginBottom: "16px",
-          cursor: "pointer",
-          borderRadius: "8px",
-          border: "none",
-          background: "#222",
-          color: "#fff",
-        }}
-      >
-        🔊 เปิดเสียงแจ้งเตือน
-      </button>
+     <button
+  onClick={enableSound}
+  style={{
+    padding: "12px 18px",
+    fontSize: "18px",
+    marginBottom: "16px",
+    cursor: "pointer",
+    borderRadius: "8px",
+    border: "none",
+    background: soundEnabled ? "#1f8f4d" : "#222",
+    color: "#fff",
+    fontWeight: "bold",
+  }}
+>
+  {soundEnabled ? "✅ เสียงแจ้งเตือนเปิดแล้ว" : "🔊 เปิดเสียงแจ้งเตือน"}
+</button>
+{!soundEnabled && (
+  <p style={{ color: "#666", marginTop: "-6px", marginBottom: "16px" }}>
+    กรุณากดเปิดเสียง 1 ครั้ง หลังเปิดหรือรีเฟรชหน้า monitor
+  </p>
+)}
 
       <h1>☕ Orders Monitor</h1>
 

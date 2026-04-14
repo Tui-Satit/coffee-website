@@ -328,7 +328,10 @@ function App() {
         <button type="button" className="cart-bar" onClick={handleViewOrder}>
           <span className="cart-bar-left">
             <strong>{totalItems} รายการ</strong>
-            <span className="cart-bar-hint">แตะเพื่อดูออเดอร์ของคุณ</span>
+            <span className="cart-bar-hint">
+              <span className="cart-bar-hint-icon" aria-hidden="true">☕</span>
+              <span>แตะเพื่อดูออเดอร์ของคุณ</span>
+            </span>
           </span>
           <span className="cart-bar-price">฿{totalPrice}</span>
         </button>

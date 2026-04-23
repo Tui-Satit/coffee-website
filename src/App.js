@@ -101,11 +101,6 @@ function App() {
       item.temperatureOptions?.[0] ||
       "Cold";
 
-    if (!sugar) {
-      alert("กรุณาเลือกระดับความหวานก่อนเพิ่มลงตะกร้า");
-      return;
-    }
-
     setCart((prev) => {
       const found = prev.find(
         (p) =>
@@ -210,10 +205,6 @@ function App() {
   };
 
   const submitOrderToFirebase = async () => {
-    console.log("clicked submitOrderToFirebase");
-    console.log("customerName =", customerName);
-    console.log("cart =", cart);
-
     if (!customerName.trim()) {
       setNameValidationNotice(true);
       alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
@@ -252,14 +243,11 @@ function App() {
       };
 
       await set(newOrderRef, orderPayload);
-      console.log("order saved to firebase");
 
       try {
         await postJson("/api/line/push-order", orderPayload);
-        console.log("LINE push sent successfully");
       } catch (lineError) {
-        console.error("LINE push failed, fallback to LINE deep link:", lineError);
-
+        console.error("LINE push failed, fallback to deep link:", lineError);
         const lineUrl = createLineOrderLink();
         window.location.href = lineUrl;
         return;

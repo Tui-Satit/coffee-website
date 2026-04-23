@@ -6,53 +6,97 @@ const axios = require("axios");
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+app.use(
+  cors({
+    origin: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(express.json());
 
-const PORT =  3002;
+const PORT = process.env.PORT || 3002;
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 
 app.get("/", (req, res) => {
   res.send("LINE order server is running");
 });
 
-app.post("/send-order", async (req, res) => {
-  try {
-    const { customerName, items, totalPrice, note } = req.body;
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    message: "Server is healthy",
+  });
+});
 
-    if (!items || !items.length) {
-      return res.status(400).json({ error: "No order items found" });
+app.post("/api/line/push-order", async (req, res) => {
+  try {
+    if (!LINE_CHANNEL_ACCESS_TOKEN) {
+      return res.status(500).json({
+        success: false,
+        error: "Missing LINE_CHANNEL_ACCESS_TOKEN in environment variables",
+      });
+    }
+
+    const {
+      orderId,
+      customerName,
+      items,
+      totalItems,
+      totalPrice,
+      note,
+      pickupTime,
+      createdAt,
+    } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No order items found",
+      });
     }
 
     const getTemperatureLabel = (temperature) => {
-      if (temperature === "Hot" || temperature === "Cold") {
-        return temperature;
-      }
-      return temperature || "Cold";
+      if (temperature === "Hot") return "🔥 ร้อน";
+      if (temperature === "Cold") return "❄️ เย็น";
+      return temperature || "❄️ เย็น";
     };
 
     const getSugarLabel = (sugar) => sugar || "ปกติ";
 
     const orderLines = items.map((item, index) => {
-      const itemTotal = item.price * item.qty;
-      return `${index + 1}. ${item.name} (${getTemperatureLabel(item.temperature)} • ${getSugarLabel(
-        item.sugar
-      )}) x${item.qty} = ฿${itemTotal}`;
+      const itemTotal = Number(item.price || 0) * Number(item.qty || 0);
+
+      return `${index + 1}. ${item.name} (${getTemperatureLabel(
+        item.temperature
+      )} • ${getSugarLabel(item.sugar)}) x${item.qty} = ฿${itemTotal}`;
     });
 
+    const createdAtText = createdAt
+      ? new Date(createdAt).toLocaleString("th-TH", {
+          dateStyle: "short",
+          timeStyle: "short",
+        })
+      : "-";
+
     const messageText = [
-      "☕ คำสั่งซื้อใหม่",
+      "🚨 ออเดอร์ใหม่เข้าร้าน!",
       "",
-      `👤 ลูกค้า: ${customerName || "-"}`,
+      `Order ID: ${orderId || "-"}`,
+      `ลูกค้า: ${customerName || "-"}`,
+      `รับสินค้า: ${pickupTime || "รับที่ร้าน"}`,
+      `เวลา: ${createdAtText}`,
       "",
-      "🛒 รายการสั่งซื้อ",
-      orderLines.join("\n"),
+      "รายการสั่ง",
+      ...orderLines,
       "",
-      "📝 หมายเหตุ",
-      note || "-",
+      `จำนวนรวม: ${totalItems || 0} แก้ว`,
+      `ยอดรวม: ฿${totalPrice || 0}`,
       "",
-      "💰 ยอดรวม",
-      `฿${totalPrice || 0}`,
+      `หมายเหตุ: ${note || "-"}`,
+      "",
+      "กรุณาเตรียมออเดอร์ทันที",
     ].join("\n");
 
     await axios.post(
@@ -73,12 +117,19 @@ app.post("/send-order", async (req, res) => {
       }
     );
 
-    res.json({ success: true, message: "Order sent to LINE successfully" });
+    return res.json({
+      success: true,
+      message: "Order sent to LINE successfully",
+    });
   } catch (error) {
-    console.error("Send order error:", error.response?.data || error.message);
-    res.status(500).json({
+    console.error(
+      "Send order error:",
+      error.response?.data || error.message || error
+    );
+
+    return res.status(500).json({
       success: false,
-      error: error.response?.data || error.message,
+      error: error.response?.data || error.message || "Unknown server error",
     });
   }
 });

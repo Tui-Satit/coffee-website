@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import "./App.css";
 import { db } from "./firebase";
 import { ref, push, set } from "firebase/database";
+import { postJson } from "./api";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
 const SHOP_LINE_ID = "@575kncik";
@@ -91,6 +92,7 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
   const [nameValidationNotice, setNameValidationNotice] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addToCart = (item) => {
     const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
@@ -223,6 +225,10 @@ function App() {
       return;
     }
 
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
     try {
       const ordersRef = ref(db, "orders");
       const newOrderRef = push(ordersRef);
@@ -233,7 +239,8 @@ function App() {
         0
       );
 
-      await set(newOrderRef, {
+      const orderPayload = {
+        orderId: newOrderRef.key,
         customerName: customerName.trim(),
         note: note.trim(),
         pickupTime: PICKUP_MESSAGE,
@@ -242,16 +249,35 @@ function App() {
         totalPrice: finalTotalPrice,
         createdAt: Date.now(),
         status: "new",
-      });
+      };
 
+      await set(newOrderRef, orderPayload);
       console.log("order saved to firebase");
 
-      const lineUrl = createLineOrderLink();
-      window.location.href = lineUrl;
-     
+      try {
+        await postJson("/api/line/push-order", orderPayload);
+        console.log("LINE push sent successfully");
+      } catch (lineError) {
+        console.error("LINE push failed, fallback to LINE deep link:", lineError);
+
+        const lineUrl = createLineOrderLink();
+        window.location.href = lineUrl;
+        return;
+      }
+
+      alert("ส่งออเดอร์สำเร็จแล้ว");
+
+      setCart([]);
+      setAddedItemState({});
+      setCustomerName("");
+      setNote("");
+      setCartOpen(false);
+      setNameValidationNotice(false);
     } catch (error) {
       console.error("Error sending order:", error);
       alert("ส่งออเดอร์ไม่สำเร็จ");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -346,7 +372,9 @@ function App() {
           <span className="cart-bar-left">
             <strong>{totalItems} รายการ</strong>
             <span className="cart-bar-hint">
-              <span className="cart-bar-hint-icon" aria-hidden="true">☕</span>
+              <span className="cart-bar-hint-icon" aria-hidden="true">
+                ☕
+              </span>
               <span>แตะเพื่อดูออเดอร์ของคุณ</span>
             </span>
           </span>
@@ -382,7 +410,12 @@ function App() {
               </span>
               <span>ชื่อลูกค้า</span>
             </span>
-            <div className={`input-with-icon ${nameValidationNotice ? "error-input" : ""}`}>
+
+            <div
+              className={`input-with-icon ${
+                nameValidationNotice ? "error-input" : ""
+              }`}
+            >
               <span className="input-icon" aria-hidden="true">
                 👤
               </span>
@@ -425,7 +458,11 @@ function App() {
               key={`${item.id}-${item.sugar}-${item.temperature}`}
             >
               <div className="drawer-item-left">
-                <img src={item.image} alt={item.name} className="drawer-thumb" />
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="drawer-thumb"
+                />
                 <div>
                   <h4>{item.name}</h4>
                   <p>
@@ -487,8 +524,9 @@ function App() {
           type="button"
           className="line-order-btn"
           onClick={submitOrderToFirebase}
+          disabled={isSubmitting}
         >
-          ส่งออเดอร์ผ่าน LINE
+          {isSubmitting ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ผ่าน LINE"}
         </button>
       </section>
     </div>

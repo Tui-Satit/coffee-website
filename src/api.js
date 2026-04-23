@@ -1,7 +1,7 @@
 const normalizeBaseUrl = (url = "") => url.replace(/\/+$/, "");
 
 const API_URL = normalizeBaseUrl(
-  process.env.REACT_APP_API_URL || "https://coffee-server-hazel.vercel.app"
+  process.env.REACT_APP_API_URL || "http://localhost:3002"
 );
 
 export const apiConfig = {
@@ -13,7 +13,8 @@ export const buildApiUrl = (path) => {
   return `${apiConfig.baseUrl}${normalizedPath}`;
 };
 
-export const apiFetch = (path, options = {}) => fetch(buildApiUrl(path), options);
+export const apiFetch = (path, options = {}) =>
+  fetch(buildApiUrl(path), options);
 
 export const getJson = async (path, options = {}) => {
   const response = await apiFetch(path, options);

@@ -5,7 +5,7 @@ import { ref, push, set } from "firebase/database";
 import { postJson } from "./api";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
-const SHOP_LINE_ID = "satitme";
+const SHOP_LINE_ID = "@575kncik";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
 const TEMPERATURE_LABELS = {

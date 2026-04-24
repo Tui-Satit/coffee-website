@@ -1,434 +1,260 @@
-* {
-  box-sizing: border-box;
+import "./App.css";
+import { useState } from "react";
+import { ref, push, serverTimestamp } from "firebase/database";
+import { db } from "./firebase";
+
+const LINE_LINK = "https://line.me/ti/p/~satitme";
+
+const menuItems = [
+  {
+    id: 1,
+    name: "Espresso",
+    description: "กาแฟช็อตเข้มข้น กลมกล่อม",
+    price: 45,
+    image:
+      "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=900&q=80",
+    badge: "ยอดนิยม",
+  },
+  {
+    id: 2,
+    name: "Americano",
+    description: "กาแฟดำ หอม เข้ม ไม่หวาน",
+    price: 50,
+    image:
+      "https://images.unsplash.com/photo-1497636577773-f1231844b336?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: 3,
+    name: "Latte",
+    description: "กาแฟนมนุ่ม หอมละมุน",
+    price: 60,
+    image:
+      "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    id: 4,
+    name: "Cappuccino",
+    description: "กาแฟนมพร้อมฟองนมนุ่ม",
+    price: 60,
+    image:
+      "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=900&q=80",
+  },
+];
+
+function App() {
+  const [cart, setCart] = useState([]);
+  const [customerName, setCustomerName] = useState("");
+  const [orderType, setOrderType] = useState("รับที่ร้าน");
+  const [note, setNote] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const addToCart = (item) => {
+    setCart((prev) => {
+      const found = prev.find((i) => i.id === item.id);
+
+      if (found) {
+        return prev.map((i) =>
+          i.id === item.id ? { ...i, qty: i.qty + 1 } : i
+        );
+      }
+
+      return [...prev, { ...item, qty: 1 }];
+    });
+  };
+
+  const increaseQty = (id) => {
+    setCart((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, qty: i.qty + 1 } : i))
+    );
+  };
+
+  const decreaseQty = (id) => {
+    setCart((prev) =>
+      prev
+        .map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i))
+        .filter((i) => i.qty > 0)
+    );
+  };
+
+  const removeItem = (id) => {
+    setCart((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+
+  const submitOrderAndOpenLine = async () => {
+    if (cart.length === 0) {
+      alert("กรุณาเลือกเมนูก่อนส่งออเดอร์");
+      return;
+    }
+
+    if (!customerName.trim()) {
+      alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+      return;
+    }
+
+    setSending(true);
+
+    const orderData = {
+      customerName,
+      orderType,
+      note,
+      items: cart,
+      totalPrice,
+      status: "new",
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      await push(ref(db, "orders"), orderData);
+
+      setCart([]);
+      setCustomerName("");
+      setOrderType("รับที่ร้าน");
+      setNote("");
+
+      window.open(LINE_LINK, "_blank", "noopener,noreferrer");
+    } catch {
+      alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <div className="brand-logo">☕</div>
+          <strong>ร้านกาแฟมินิมอล</strong>
+        </div>
+
+        <nav className="nav">
+          <span>หน้าแรก</span>
+          <span>เมนูกาแฟ</span>
+        </nav>
+
+        <div className="cart-badge">🛒 {totalQty}</div>
+      </header>
+
+      <main className="page">
+        <section className="menu-area">
+          <div className="hero">
+            <p className="eyebrow">Fresh coffee every day</p>
+            <h1>กาแฟคุณตุ่ย ☕</h1>
+            <p>เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที</p>
+          </div>
+
+          <h2 className="section-title">☕ เมนูกาแฟยอดนิยม</h2>
+
+          <div className="menu-grid">
+            {menuItems.map((item) => (
+              <article className="coffee-card" key={item.id}>
+                <div className="coffee-image-wrap">
+                  <img src={item.image} alt={item.name} />
+                  {item.badge && <span className="badge">{item.badge}</span>}
+                  <button className="heart-btn">♡</button>
+                </div>
+
+                <div className="coffee-info">
+                  <h3>{item.name}</h3>
+                  <p>{item.description}</p>
+
+                  <div className="coffee-footer">
+                    <strong>{item.price} บาท</strong>
+                    <button onClick={() => addToCart(item)}>＋ เพิ่ม</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <aside className="order-card">
+          <h2>🛍️ ออเดอร์ของคุณ</h2>
+
+          <label>ชื่อลูกค้า</label>
+          <input
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="กรอกชื่อของคุณ"
+          />
+
+          <label>รูปแบบการรับ</label>
+          <select
+            value={orderType}
+            onChange={(e) => setOrderType(e.target.value)}
+          >
+            <option value="รับที่ร้าน">รับที่ร้าน</option>
+            <option value="จัดส่ง">จัดส่ง</option>
+          </select>
+
+          <div className="divider" />
+
+          <h3>รายการสั่งซื้อ</h3>
+
+          <div className="cart-list">
+            {cart.length === 0 ? (
+              <div className="empty-cart">
+                <span>☕</span>
+                <strong>ยังไม่มีเมนูในออเดอร์</strong>
+                <p>เลือกเมนูที่คุณชอบได้เลย</p>
+              </div>
+            ) : (
+              cart.map((item) => (
+                <div className="cart-item" key={item.id}>
+                  <div>
+                    <strong>{item.name}</strong>
+                    <p>{item.price} บาท</p>
+                  </div>
+
+                  <div className="qty">
+                    <button onClick={() => decreaseQty(item.id)}>-</button>
+                    <span>{item.qty}</span>
+                    <button onClick={() => increaseQty(item.id)}>+</button>
+                  </div>
+
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeItem(item.id)}
+                  >
+                    ลบ
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <label>หมายเหตุถึงร้าน</label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล เพิ่มช็อต"
+          />
+
+          <div className="total-row">
+            <span>รวมทั้งหมด</span>
+            <strong>{totalPrice} บาท</strong>
+          </div>
+
+          <button
+            className="submit-btn"
+            onClick={submitOrderAndOpenLine}
+            disabled={sending}
+          >
+            {sending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
+          </button>
+        </aside>
+      </main>
+
+      <footer className="features">
+        <div>🌿 สดใหม่ทุกแก้ว</div>
+        <div>❤️ รสชาติดี กลมกล่อม</div>
+        <div>🏪 รับที่ร้าน สะดวก รวดเร็ว</div>
+      </footer>
+    </div>
+  );
 }
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f6f3ef;
-  color: #17211b;
-}
-
-.app {
-  min-height: 100vh;
-}
-
-.topbar {
-  height: 76px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e7e2dc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 52px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-logo {
-  width: 44px;
-  height: 44px;
-  background: #006241;
-  color: #fff;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-  box-shadow: 0 10px 22px rgba(0, 98, 65, 0.25);
-}
-
-.nav {
-  display: flex;
-  gap: 32px;
-  font-weight: 700;
-  color: #24352c;
-}
-
-.cart-badge {
-  background: #006241;
-  color: white;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-weight: 800;
-}
-
-.page {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 48px 24px;
-  display: grid;
-  grid-template-columns: 1fr 390px;
-  gap: 44px;
-  align-items: start;
-}
-
-.hero {
-  margin-bottom: 36px;
-}
-
-.eyebrow {
-  color: #006241;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  margin-bottom: 10px;
-}
-
-.hero h1 {
-  font-size: clamp(42px, 6vw, 68px);
-  line-height: 1;
-  margin: 0 0 12px;
-  letter-spacing: -2px;
-}
-
-.hero p {
-  color: #647067;
-  font-size: 18px;
-  margin: 0;
-}
-
-.section-title {
-  font-size: 28px;
-  margin: 0 0 24px;
-}
-
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 26px;
-}
-
-.coffee-card {
-  background: white;
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: 0 18px 40px rgba(35, 31, 28, 0.1);
-  border: 1px solid #eee8df;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.coffee-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 24px 54px rgba(35, 31, 28, 0.16);
-}
-
-.coffee-image-wrap {
-  height: 210px;
-  position: relative;
-  overflow: hidden;
-}
-
-.coffee-image-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  background: #006241;
-  color: white;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.heart-btn {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 2px solid white;
-  background: rgba(0, 0, 0, 0.22);
-  color: white;
-  font-size: 28px;
-  cursor: pointer;
-}
-
-.coffee-info {
-  padding: 20px;
-}
-
-.coffee-info h3 {
-  margin: 0 0 8px;
-  font-size: 24px;
-}
-
-.coffee-info p {
-  margin: 0;
-  color: #555f58;
-}
-
-.coffee-footer {
-  margin-top: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.coffee-footer strong {
-  font-size: 26px;
-  color: #006241;
-}
-
-.coffee-footer button {
-  border: none;
-  background: #006241;
-  color: white;
-  padding: 13px 22px;
-  border-radius: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 10px 20px rgba(0, 98, 65, 0.25);
-}
-
-.order-card {
-  background: white;
-  border-radius: 26px;
-  padding: 28px;
-  box-shadow: 0 22px 60px rgba(35, 31, 28, 0.12);
-  border: 1px solid #eee8df;
-  position: sticky;
-  top: 100px;
-}
-
-.order-card h2 {
-  margin: 0 0 22px;
-  font-size: 26px;
-}
-
-.order-card h3 {
-  margin: 0 0 14px;
-  font-size: 18px;
-}
-
-.order-card label {
-  display: block;
-  font-weight: 800;
-  margin: 16px 0 8px;
-}
-
-.order-card input,
-.order-card select,
-.order-card textarea {
-  width: 100%;
-  border: 1px solid #d8d4cf;
-  border-radius: 14px;
-  padding: 14px 16px;
-  font-size: 15px;
-  outline: none;
-  background: white;
-}
-
-.order-card textarea {
-  min-height: 90px;
-  resize: vertical;
-}
-
-.order-card input:focus,
-.order-card select:focus,
-.order-card textarea:focus {
-  border-color: #006241;
-  box-shadow: 0 0 0 4px rgba(0, 98, 65, 0.12);
-}
-
-.divider {
-  height: 1px;
-  background: #ebe4dc;
-  margin: 24px 0;
-}
-
-.cart-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.empty-cart {
-  background: #fbf6ef;
-  border: 1px solid #eee0d2;
-  border-radius: 16px;
-  padding: 26px;
-  text-align: center;
-  color: #6d6258;
-}
-
-.empty-cart span {
-  font-size: 32px;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.empty-cart p {
-  margin: 6px 0 0;
-}
-
-.cart-item {
-  background: #fbf8f3;
-  border-radius: 16px;
-  padding: 14px;
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 10px;
-  align-items: center;
-}
-
-.cart-item p {
-  margin: 4px 0 0;
-  color: #6b675f;
-}
-
-.qty {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: white;
-  border-radius: 999px;
-  padding: 5px;
-  border: 1px solid #e2ddd6;
-}
-
-.qty button {
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 50%;
-  background: #006241;
-  color: white;
-  cursor: pointer;
-}
-
-.qty span {
-  min-width: 18px;
-  text-align: center;
-  font-weight: 800;
-}
-
-.remove-btn {
-  border: none;
-  background: #fee2e2;
-  color: #b91c1c;
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.total-row {
-  margin: 22px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.total-row strong {
-  color: #006241;
-  font-size: 24px;
-}
-
-.copy-success {
-  text-align: center;
-  color: #16a34a;
-  font-weight: 800;
-  margin: 8px 0;
-}
-
-.copy-btn,
-.line-btn,
-.submit-btn {
-  width: 100%;
-  border: none;
-  border-radius: 14px;
-  padding: 15px 16px;
-  margin-top: 12px;
-  display: block;
-  text-align: center;
-  text-decoration: none;
-  font-size: 16px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.copy-btn {
-  background: white;
-  color: #006241;
-  border: 2px solid #006241;
-}
-
-.line-btn {
-  background: #06c755;
-  color: white;
-  box-shadow: 0 12px 22px rgba(6, 199, 85, 0.22);
-}
-
-.submit-btn {
-  background: #004b2f;
-  color: white;
-  box-shadow: 0 14px 24px rgba(0, 75, 47, 0.24);
-}
-
-.submit-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.features {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 12px 24px 46px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  color: #26352c;
-  font-weight: 800;
-}
-
-.features div {
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid #eee8df;
-  border-radius: 18px;
-  padding: 18px;
-}
-
-@media (max-width: 920px) {
-  .topbar {
-    padding: 0 18px;
-  }
-
-  .nav {
-    display: none;
-  }
-
-  .page {
-    grid-template-columns: 1fr;
-    padding: 34px 16px;
-  }
-
-  .menu-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .order-card {
-    position: static;
-  }
-
-  .features {
-    grid-template-columns: 1fr;
-    padding: 0 16px 40px;
-  }
-}
+export default App;

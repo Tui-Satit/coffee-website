@@ -3,41 +3,36 @@ import { useState } from "react";
 import { ref, push, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
-const LINE_LINK = "https://line.me/ti/p/~satitme";
+const SHOP_LINE_ID = "satitme";
 
 const menuItems = [
   {
     id: 1,
-    name: "Espresso",
-    description: "กาแฟช็อตเข้มข้น กลมกล่อม",
-    price: 45,
-    image:
-      "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=900&q=80",
-    badge: "ยอดนิยม",
+    name: "Americano",
+    price: 55,
+    image: "/images/americano.jpg",
+    desc: "เข้ม หอม สดชื่น",
   },
   {
     id: 2,
-    name: "Americano",
-    description: "กาแฟดำ หอม เข้ม ไม่หวาน",
-    price: 50,
-    image:
-      "https://images.unsplash.com/photo-1497636577773-f1231844b336?auto=format&fit=crop&w=900&q=80",
+    name: "Latte",
+    price: 65,
+    image: "/images/latte.jpg",
+    desc: "นุ่ม ละมุน กลมกล่อม",
   },
   {
     id: 3,
-    name: "Latte",
-    description: "กาแฟนมนุ่ม หอมละมุน",
-    price: 60,
-    image:
-      "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80",
+    name: "Cappuccino",
+    price: 65,
+    image: "/images/cappuccino.jpg",
+    desc: "หอมกาแฟ ฟองนมนุ่ม",
   },
   {
     id: 4,
-    name: "Cappuccino",
-    description: "กาแฟนมพร้อมฟองนมนุ่ม",
-    price: 60,
-    image:
-      "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=900&q=80",
+    name: "Mocha",
+    price: 70,
+    image: "/images/mocha.jpg",
+    desc: "กาแฟผสมช็อกโกแลต",
   },
 ];
 
@@ -46,44 +41,68 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [orderType, setOrderType] = useState("รับที่ร้าน");
   const [note, setNote] = useState("");
-  const [sending, setSending] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  const addToCart = (item) => {
-    setCart((prev) => {
-      const found = prev.find((i) => i.id === item.id);
+  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+
+  const addToCart = (menu) => {
+    setCart((prevCart) => {
+      const found = prevCart.find((item) => item.id === menu.id);
 
       if (found) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: i.qty + 1 } : i
+        return prevCart.map((item) =>
+          item.id === menu.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
 
-      return [...prev, { ...item, qty: 1 }];
+      return [...prevCart, { ...menu, qty: 1 }];
     });
   };
 
   const increaseQty = (id) => {
-    setCart((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, qty: i.qty + 1 } : i))
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === id ? { ...item, qty: item.qty + 1 } : item
+      )
     );
   };
 
   const decreaseQty = (id) => {
-    setCart((prev) =>
-      prev
-        .map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i))
-        .filter((i) => i.qty > 0)
+    setCart((prevCart) =>
+      prevCart
+        .map((item) =>
+          item.id === id ? { ...item, qty: item.qty - 1 } : item
+        )
+        .filter((item) => item.qty > 0)
     );
   };
 
-  const removeItem = (id) => {
-    setCart((prev) => prev.filter((i) => i.id !== id));
+  const createLineMessage = () => {
+    const orderList = cart
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item.name} x ${item.qty} = ${
+            item.price * item.qty
+          } บาท`
+      )
+      .join("\n");
+
+    return `☕ ออเดอร์ใหม่จากร้านกาแฟ
+
+👤 ชื่อลูกค้า: ${customerName}
+📦 รูปแบบ: ${orderType}
+
+🧾 รายการสั่งซื้อ:
+${orderList}
+
+📝 หมายเหตุ:
+${note || "-"}
+
+💰 รวมทั้งหมด: ${total} บาท`;
   };
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-
-  const submitOrderAndOpenLine = async () => {
+  const sendOrder = async () => {
     if (cart.length === 0) {
       alert("กรุณาเลือกเมนูก่อนส่งออเดอร์");
       return;
@@ -94,14 +113,17 @@ function App() {
       return;
     }
 
-    setSending(true);
+    if (isSending) return;
+
+    setIsSending(true);
 
     const orderData = {
-      customerName,
+      customerName: customerName.trim(),
       orderType,
-      note,
+      note: note.trim(),
       items: cart,
-      totalPrice,
+      total,
+      totalQty,
       status: "new",
       createdAt: serverTimestamp(),
     };
@@ -109,150 +131,156 @@ function App() {
     try {
       await push(ref(db, "orders"), orderData);
 
+      const message = createLineMessage();
+      const lineUrl = `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?${encodeURIComponent(
+        message
+      )}`;
+
+      window.location.href = lineUrl;
+
       setCart([]);
       setCustomerName("");
-      setOrderType("รับที่ร้าน");
       setNote("");
-
-      window.open(LINE_LINK, "_blank", "noopener,noreferrer");
-    } catch {
-      alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
+    } catch (error) {
+      console.error("ส่งออเดอร์ไม่สำเร็จ:", error);
+      alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     } finally {
-      setSending(false);
+      setIsSending(false);
     }
   };
 
   return (
     <div className="app">
-      <header className="topbar">
+      <header className="navbar">
         <div className="brand">
           <div className="brand-logo">☕</div>
-          <strong>ร้านกาแฟมินิมอล</strong>
+          <div>
+            <h1>ร้านกาแฟมินิมอล</h1>
+            <p>สดใหม่ทุกแก้ว</p>
+          </div>
         </div>
 
-        <nav className="nav">
-          <span>หน้าแรก</span>
-          <span>เมนูกาแฟ</span>
+        <nav className="nav-links">
+          <a href="#home">หน้าแรก</a>
+          <a href="#menu">เมนูกาแฟ</a>
         </nav>
 
-        <div className="cart-badge">🛒 {totalQty}</div>
+        <div className="cart-badge">
+          <span>🛒</span>
+          <strong>{totalQty}</strong>
+        </div>
       </header>
 
-      <main className="page">
-        <section className="menu-area">
-          <div className="hero">
-            <p className="eyebrow">Fresh coffee every day</p>
-            <h1>กาแฟคุณตุ่ย ☕</h1>
-            <p>เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที</p>
+      <main>
+        <section id="home" className="hero">
+          <div className="hero-content">
+            <p className="eyebrow">Minimal Coffee</p>
+            <h2>กาแฟดี ๆ สำหรับวันทำงานของคุณ</h2>
+            <p>
+              เลือกเมนูที่ชอบ เพิ่มลงออเดอร์ แล้วส่งให้ร้านผ่าน LINE ได้ทันที
+            </p>
+            <a href="#menu" className="hero-button">
+              ดูเมนูกาแฟ
+            </a>
+          </div>
+        </section>
+
+        <section id="menu" className="section">
+          <div className="section-title">
+            <p>Our Menu</p>
+            <h2>เมนูกาแฟ</h2>
           </div>
 
-          <h2 className="section-title">☕ เมนูกาแฟยอดนิยม</h2>
-
           <div className="menu-grid">
-            {menuItems.map((item) => (
-              <article className="coffee-card" key={item.id}>
-                <div className="coffee-image-wrap">
-                  <img src={item.image} alt={item.name} />
-                  {item.badge && <span className="badge">{item.badge}</span>}
-                  <button className="heart-btn">♡</button>
-                </div>
-
-                <div className="coffee-info">
-                  <h3>{item.name}</h3>
-                  <p>{item.description}</p>
-
-                  <div className="coffee-footer">
-                    <strong>{item.price} บาท</strong>
-                    <button onClick={() => addToCart(item)}>＋ เพิ่ม</button>
+            {menuItems.map((menu) => (
+              <div className="menu-card" key={menu.id}>
+                <img src={menu.image} alt={menu.name} />
+                <div className="menu-card-body">
+                  <h3>{menu.name}</h3>
+                  <p>{menu.desc}</p>
+                  <div className="menu-bottom">
+                    <strong>{menu.price} บาท</strong>
+                    <button onClick={() => addToCart(menu)}>เพิ่ม</button>
                   </div>
                 </div>
-              </article>
+              </div>
             ))}
           </div>
         </section>
 
-        <aside className="order-card">
-          <h2>🛍️ ออเดอร์ของคุณ</h2>
+        <section className="order-section">
+          <div className="order-card">
+            <h2>รายการสั่งซื้อ</h2>
 
-          <label>ชื่อลูกค้า</label>
-          <input
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="กรอกชื่อของคุณ"
-          />
+            <label>ชื่อลูกค้า</label>
+            <input
+              type="text"
+              placeholder="เช่น คุณตุ่ย"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
 
-          <label>รูปแบบการรับ</label>
-          <select
-            value={orderType}
-            onChange={(e) => setOrderType(e.target.value)}
-          >
-            <option value="รับที่ร้าน">รับที่ร้าน</option>
-            <option value="จัดส่ง">จัดส่ง</option>
-          </select>
+            <label>รูปแบบการรับสินค้า</label>
+            <select
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value)}
+            >
+              <option value="รับที่ร้าน">รับที่ร้าน</option>
+              <option value="เดลิเวอรี่">เดลิเวอรี่</option>
+            </select>
 
-          <div className="divider" />
-
-          <h3>รายการสั่งซื้อ</h3>
-
-          <div className="cart-list">
-            {cart.length === 0 ? (
-              <div className="empty-cart">
-                <span>☕</span>
-                <strong>ยังไม่มีเมนูในออเดอร์</strong>
-                <p>เลือกเมนูที่คุณชอบได้เลย</p>
-              </div>
-            ) : (
-              cart.map((item) => (
-                <div className="cart-item" key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>{item.price} บาท</p>
-                  </div>
-
-                  <div className="qty">
-                    <button onClick={() => decreaseQty(item.id)}>-</button>
-                    <span>{item.qty}</span>
-                    <button onClick={() => increaseQty(item.id)}>+</button>
-                  </div>
-
-                  <button
-                    className="remove-btn"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    ลบ
-                  </button>
+            <div className="cart-list">
+              {cart.length === 0 ? (
+                <div className="empty-cart">
+                  <p>☕ ยังไม่มีเมนูในออเดอร์</p>
+                  <span>เลือกเมนูที่คุณชอบได้เลย</span>
                 </div>
-              ))
-            )}
+              ) : (
+                cart.map((item) => (
+                  <div className="cart-item" key={item.id}>
+                    <div>
+                      <h4>{item.name}</h4>
+                      <p>{item.price} บาท</p>
+                    </div>
+
+                    <div className="qty-control">
+                      <button onClick={() => decreaseQty(item.id)}>-</button>
+                      <span>{item.qty}</span>
+                      <button onClick={() => increaseQty(item.id)}>+</button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <label>หมายเหตุถึงร้าน</label>
+            <textarea
+              placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล เพิ่มช็อต"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+
+            <div className="total-row">
+              <strong>รวมทั้งหมด</strong>
+              <strong>{total} บาท</strong>
+            </div>
+
+            <button
+              className="send-button"
+              onClick={sendOrder}
+              disabled={isSending || cart.length === 0}
+            >
+              {isSending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
+            </button>
           </div>
+        </section>
 
-          <label>หมายเหตุถึงร้าน</label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล เพิ่มช็อต"
-          />
-
-          <div className="total-row">
-            <span>รวมทั้งหมด</span>
-            <strong>{totalPrice} บาท</strong>
-          </div>
-
-          <button
-            className="submit-btn"
-            onClick={submitOrderAndOpenLine}
-            disabled={sending}
-          >
-            {sending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
-          </button>
-        </aside>
+        <section className="features">
+          <div>🌿 สดใหม่ทุกแก้ว</div>
+          <div>❤️ รสชาติดี กลมกล่อม</div>
+          <div>🏪 รับที่ร้าน สะดวก รวดเร็ว</div>
+        </section>
       </main>
-
-      <footer className="features">
-        <div>🌿 สดใหม่ทุกแก้ว</div>
-        <div>❤️ รสชาติดี กลมกล่อม</div>
-        <div>🏪 รับที่ร้าน สะดวก รวดเร็ว</div>
-      </footer>
     </div>
   );
 }

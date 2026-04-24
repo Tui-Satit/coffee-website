@@ -5,7 +5,7 @@ import { ref, push, set } from "firebase/database";
 import { postJson } from "./api";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
-const SHOP_LINE_ID = "@575kncik";
+const SHOP_LINE_ID = "satitme";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
 const TEMPERATURE_LABELS = {
@@ -201,7 +201,8 @@ function App() {
       "⏰ กรุณาเตรียมออเดอร์ทันที",
     ].join("\n");
 
-    return `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?${encodeURIComponent(orderText)}`;
+    const encodedText = encodeURIComponent(orderText);
+    return `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?text=${encodedText}`;
   };
 
   const submitOrderToFirebase = async () => {

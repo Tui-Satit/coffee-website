@@ -2,10 +2,9 @@ import React, { useMemo, useState } from "react";
 import "./App.css";
 import { db } from "./firebase";
 import { ref, push, set } from "firebase/database";
-import { postJson } from "./api";
 
 const PICKUP_MESSAGE = "รับที่ร้าน";
-const SHOP_LINE_ID = "@575kncik";
+const SHOP_LINE_ID = "satitme";
 const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
 const TEMPERATURE_LABELS = {
@@ -170,39 +169,7 @@ function App() {
   ];
 
   const createLineOrderLink = () => {
-    const orderItemLines = cart.map((item) => {
-      const temperature =
-        item.temperature === "Cold"
-          ? "เย็น"
-          : item.temperature === "Hot"
-            ? "ร้อน"
-            : item.temperature;
-
-      return `• ${item.name} (${temperature} • ${item.sugar}) x${item.qty} = ฿${
-        item.price * item.qty
-      }`;
-    });
-
-    const orderText = [
-      "🔊 ออเดอร์ใหม่เข้าร้าน!",
-      "",
-      `👤 ชื่อลูกค้า: ${customerName.trim() || "-"}`,
-      `📅 รับสินค้า: ${PICKUP_MESSAGE}`,
-      `📝 หมายเหตุ: ${note.trim() || "-"}`,
-      "",
-      "──────────────",
-      "☕ รายการสั่ง",
-      ...orderItemLines,
-      "──────────────",
-      "",
-      `🧾 จำนวนรวม: ${totalItems} แก้ว`,
-      `💰 ยอดรวม: ฿${totalPrice}`,
-      "",
-      "⏰ กรุณาเตรียมออเดอร์ทันที",
-    ].join("\n");
-
-    const encodedText = encodeURIComponent(orderText);
-    return `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?text=${encodedText}`;
+    return `https://line.me/ti/p/~${SHOP_LINE_ID}`;
   };
 
   const submitOrderToFirebase = async () => {
@@ -245,16 +212,8 @@ function App() {
 
       await set(newOrderRef, orderPayload);
 
-      try {
-        await postJson("/api/line/push-order", orderPayload);
-      } catch (lineError) {
-        console.error("LINE push failed, fallback to deep link:", lineError);
-        const lineUrl = createLineOrderLink();
-        window.location.href = lineUrl;
-        return;
-      }
-
-      alert("ส่งออเดอร์สำเร็จแล้ว");
+      const lineUrl = createLineOrderLink();
+      window.location.href = lineUrl;
 
       setCart([]);
       setAddedItemState({});

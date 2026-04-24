@@ -1,484 +1,295 @@
-import React, { useMemo, useState } from "react";
 import "./App.css";
-import { db } from "./firebase";
-import { ref, push, set } from "firebase/database";
+import { useState } from "react";
+import { ref, push, serverTimestamp } from "firebase/database";
+import { database } from "./firebase";
 
-const PICKUP_MESSAGE = "รับที่ร้าน";
-const SHOP_LINE_ID = "satitme";
-const SUGAR_OPTIONS = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
-const DEFAULT_TEMPERATURE_OPTIONS = ["Cold", "Hot"];
-const TEMPERATURE_LABELS = {
-  Cold: "❄️ เย็น",
-  Hot: "🔥 ร้อน",
-};
+const LINE_PERSONAL_ID = "satitme";
+const LINE_LINK = `https://line.me/ti/p/~${LINE_PERSONAL_ID}`;
 
-const menu = [
+const menuItems = [
   {
     id: 1,
     name: "Espresso",
-    price: 60,
-    desc: "กาแฟช็อตเข้มข้น กลมกล่อม",
-    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
-    image:
-      "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=1000&q=80",
+    description: "กาแฟช็อตเข้มข้น กลมกล่อม",
+    price: 45,
+    image: "/images/espresso.jpg",
   },
   {
     id: 2,
-    name: "Latte",
-    price: 80,
-    desc: "เอสเปรสโซผสมนมนุ่มละมุน",
-    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
-    image:
-      "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=1000&q=80",
+    name: "Americano",
+    description: "กาแฟดำ หอม เข้ม ไม่หวาน",
+    price: 50,
+    image: "/images/americano.jpg",
   },
   {
     id: 3,
-    name: "Cappuccino",
-    price: 80,
-    desc: "ฟองนมนุ่มแน่น พร้อมรสกาแฟชัดเจน",
-    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
-    image:
-      "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1000&q=80",
+    name: "Latte",
+    description: "กาแฟนมนุ่ม หอมละมุน",
+    price: 60,
+    image: "/images/latte.jpg",
   },
   {
     id: 4,
-    name: "Mocha",
-    price: 90,
-    desc: "กาแฟช็อกโกแลตหอมหวาน สำหรับสายหวาน",
-    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
-    image:
-      "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?auto=format&fit=crop&w=1000&q=80",
-  },
-  {
-    id: 5,
-    name: "Americano",
-    price: 70,
-    desc: "กาแฟดำรสคลาสสิก ดื่มง่าย",
-    temperatureOptions: DEFAULT_TEMPERATURE_OPTIONS,
-    image:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=80",
+    name: "Cappuccino",
+    description: "กาแฟนมพร้อมฟองนมนุ่ม",
+    price: 60,
+    image: "/images/cappuccino.jpg",
   },
 ];
 
-const menuWithTemperatureOptions = menu.map((item) => ({
-  ...item,
-  temperatureOptions:
-    item.temperatureOptions?.length > 0
-      ? item.temperatureOptions
-      : DEFAULT_TEMPERATURE_OPTIONS,
-}));
-
 function App() {
   const [cart, setCart] = useState([]);
-  const [addedItemState, setAddedItemState] = useState({});
-  const [selectedSugarByItem, setSelectedSugarByItem] = useState(() =>
-    menuWithTemperatureOptions.reduce(
-      (acc, item) => ({ ...acc, [item.id]: SUGAR_OPTIONS[0] }),
-      {}
-    )
-  );
-  const [selectedTemperatureByItem, setSelectedTemperatureByItem] = useState(
-    () =>
-      menuWithTemperatureOptions.reduce(
-        (acc, item) => ({
-          ...acc,
-          [item.id]: item.temperatureOptions?.[0] || "Cold",
-        }),
-        {}
-      )
-  );
-  const [cartOpen, setCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
-  const [nameValidationNotice, setNameValidationNotice] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderType, setOrderType] = useState("รับที่ร้าน");
+  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const addToCart = (item) => {
-    const sugar = selectedSugarByItem[item.id] || SUGAR_OPTIONS[0];
-    const temperature =
-      selectedTemperatureByItem[item.id] ||
-      item.temperatureOptions?.[0] ||
-      "Cold";
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((cartItem) => cartItem.id === item.id);
 
-    setCart((prev) => {
-      const found = prev.find(
-        (p) =>
-          p.id === item.id &&
-          p.sugar === sugar &&
-          p.temperature === temperature
-      );
-
-      if (found) {
-        return prev.map((p) =>
-          p.id === item.id &&
-          p.sugar === sugar &&
-          p.temperature === temperature
-            ? { ...p, qty: p.qty + 1 }
-            : p
+      if (existingItem) {
+        return prevCart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, qty: cartItem.qty + 1 }
+            : cartItem
         );
       }
 
-      return [...prev, { ...item, qty: 1, sugar, temperature }];
+      return [...prevCart, { ...item, qty: 1 }];
     });
   };
 
-  const handleAddToCart = (item) => {
-    addToCart(item);
-    setAddedItemState((prev) => ({ ...prev, [item.id]: true }));
-
-    setTimeout(() => {
-      setAddedItemState((prev) => ({ ...prev, [item.id]: false }));
-    }, 1000);
+  const increaseQty = (id) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === id ? { ...item, qty: item.qty + 1 } : item
+      )
+    );
   };
 
-  const handleViewOrder = () => {
-    setNameValidationNotice(!customerName.trim());
-    setCartOpen(true);
-  };
-
-  const updateQty = (id, sugar, temperature, change) => {
-    setCart((prev) =>
-      prev
+  const decreaseQty = (id) => {
+    setCart((prevCart) =>
+      prevCart
         .map((item) =>
-          item.id === id &&
-          item.sugar === sugar &&
-          item.temperature === temperature
-            ? { ...item, qty: Math.max(0, item.qty + change) }
-            : item
+          item.id === id ? { ...item, qty: item.qty - 1 } : item
         )
         .filter((item) => item.qty > 0)
     );
   };
 
-  const totalItems = useMemo(
-    () => cart.reduce((sum, item) => sum + item.qty, 0),
-    [cart]
-  );
-
-  const subtotal = useMemo(
-    () => cart.reduce((sum, item) => sum + item.price * item.qty, 0),
-    [cart]
-  );
-
-  const totalPrice = subtotal;
-
-  const summaryRows = [
-    { label: "ชื่อลูกค้า", value: customerName.trim() || "-" },
-    { label: "บริการ", value: PICKUP_MESSAGE },
-    { label: "หมายเหตุ", value: note.trim() || "-" },
-  ];
-
-  const createLineOrderLink = () => {
-    return `https://line.me/ti/p/~${SHOP_LINE_ID}`;
+  const removeItem = (id) => {
+    setCart((prevCart) => prevCart.filter((item) => item.id !== id));
   };
 
-  const submitOrderToFirebase = async () => {
+  const totalPrice = cart.reduce(
+    (sum, item) => sum + item.price * item.qty,
+    0
+  );
+
+  const createOrderText = () => {
+    let text = "☕ ออเดอร์กาแฟใหม่\n";
+    text += "--------------------\n";
+
+    cart.forEach((item) => {
+      text += `${item.name} x ${item.qty} = ${item.price * item.qty} บาท\n`;
+    });
+
+    text += "--------------------\n";
+    text += `รวมทั้งหมด: ${totalPrice} บาท\n`;
+    text += `ประเภท: ${orderType}\n`;
+    text += `ชื่อลูกค้า: ${customerName || "-"}\n`;
+
+    if (note.trim()) {
+      text += `หมายเหตุ: ${note}\n`;
+    }
+
+    return text;
+  };
+
+  const copyOrder = async () => {
+    if (cart.length === 0) {
+      alert("กรุณาเลือกเมนูก่อนคัดลอกออเดอร์");
+      return;
+    }
+
+    const text = createOrderText();
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      alert("คัดลอกไม่สำเร็จ กรุณาลองใหม่");
+    }
+  };
+
+  const submitOrder = async () => {
+    if (cart.length === 0) {
+      alert("กรุณาเลือกเมนูก่อนส่งออเดอร์");
+      return;
+    }
+
     if (!customerName.trim()) {
-      setNameValidationNotice(true);
       alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
       return;
     }
 
-    if (cart.length === 0) {
-      alert("กรุณาเลือกเมนูก่อน");
-      return;
-    }
+    setSending(true);
 
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
+    const orderData = {
+      customerName,
+      note,
+      orderType,
+      items: cart,
+      totalPrice,
+      status: "new",
+      createdAt: serverTimestamp(),
+    };
 
     try {
-      const ordersRef = ref(db, "orders");
-      const newOrderRef = push(ordersRef);
+      await push(ref(database, "orders"), orderData);
 
-      const finalTotalItems = cart.reduce((sum, item) => sum + item.qty, 0);
-      const finalTotalPrice = cart.reduce(
-        (sum, item) => sum + item.price * item.qty,
-        0
-      );
-
-      const orderPayload = {
-        orderId: newOrderRef.key,
-        customerName: customerName.trim(),
-        note: note.trim(),
-        pickupTime: PICKUP_MESSAGE,
-        items: cart,
-        totalItems: finalTotalItems,
-        totalPrice: finalTotalPrice,
-        createdAt: Date.now(),
-        status: "new",
-      };
-
-      await set(newOrderRef, orderPayload);
-
-      const lineUrl = createLineOrderLink();
-      window.location.href = lineUrl;
+      alert("ส่งออเดอร์เรียบร้อยแล้ว ร้านค้าจะเห็นในหน้า Monitor");
 
       setCart([]);
-      setAddedItemState({});
       setCustomerName("");
       setNote("");
-      setCartOpen(false);
-      setNameValidationNotice(false);
+      setOrderType("รับที่ร้าน");
+      setCopied(false);
     } catch (error) {
-      console.error("Error sending order:", error);
-      alert("ส่งออเดอร์ไม่สำเร็จ");
+      alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
     } finally {
-      setIsSubmitting(false);
+      setSending(false);
     }
   };
 
   return (
     <div className="app">
-      <header className="shop-sticky-header">
-        <div className="shop-pill">กาแฟคุณตุ่ย</div>
+      <header className="hero">
+        <p className="eyebrow">ร้านกาแฟมินิมอล</p>
+        <h1>กาแฟคุณตุ่ย</h1>
+        <p className="hero-text">
+          เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที
+        </p>
       </header>
 
-      <section className="hero">
-        <p className="hero-badge">ร้านกาแฟมินิมอล</p>
-        <h1>เมนูกาแฟ</h1>
-        <p className="hero-text">เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที</p>
-      </section>
+      <main className="main-layout">
+        <section className="menu-section">
+          <h2>เมนูกาแฟ</h2>
 
-      <main className="menu-section">
-        <div className="menu-grid">
-          {menuWithTemperatureOptions.map((item) => (
-            <div className="menu-card" key={item.id}>
-              <div className="menu-image-wrap">
-                <img src={item.image} alt={item.name} className="menu-image" />
-              </div>
+          <div className="menu-grid">
+            {menuItems.map((item) => (
+              <div className="menu-card" key={item.id}>
+                <img src={item.image} alt={item.name} />
 
-              <div className="menu-content">
-                <div>
+                <div className="menu-content">
                   <h3>{item.name}</h3>
-                  <p className="menu-desc">{item.desc}</p>
-                </div>
+                  <p>{item.description}</p>
 
-                <label className="sugar-field">
-                  <span>อุณหภูมิ</span>
-                  <select
-                    value={
-                      selectedTemperatureByItem[item.id] ||
-                      item.temperatureOptions?.[0] ||
-                      "Cold"
-                    }
-                    onChange={(e) =>
-                      setSelectedTemperatureByItem((prev) => ({
-                        ...prev,
-                        [item.id]: e.target.value,
-                      }))
-                    }
-                  >
-                    {item.temperatureOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {TEMPERATURE_LABELS[option] || option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="sugar-field">
-                  <span>ระดับความหวาน</span>
-                  <select
-                    value={selectedSugarByItem[item.id] || SUGAR_OPTIONS[0]}
-                    onChange={(e) =>
-                      setSelectedSugarByItem((prev) => ({
-                        ...prev,
-                        [item.id]: e.target.value,
-                      }))
-                    }
-                  >
-                    {SUGAR_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="menu-footer">
-                  <div className="price-block">
-                    <span className="price-label">ราคา</span>
-                    <strong>฿{item.price}</strong>
+                  <div className="menu-footer">
+                    <strong>{item.price} บาท</strong>
+                    <button onClick={() => addToCart(item)}>
+                      เพิ่ม
+                    </button>
                   </div>
-                  <button
-                    className="add-btn"
-                    onClick={() => handleAddToCart(item)}
-                  >
-                    {addedItemState[item.id] ? "✓ เพิ่มแล้ว" : "+ เพิ่มลงตะกร้า"}
-                  </button>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
-
-      {totalItems > 0 && (
-        <button type="button" className="cart-bar" onClick={handleViewOrder}>
-          <span className="cart-bar-left">
-            <strong>{totalItems} รายการ</strong>
-            <span className="cart-bar-hint">
-              <span className="cart-bar-hint-icon" aria-hidden="true">
-                ☕
-              </span>
-              <span>แตะเพื่อดูออเดอร์ของคุณ</span>
-            </span>
-          </span>
-          <span className="cart-bar-price">฿{totalPrice}</span>
-        </button>
-      )}
-
-      {cartOpen && (
-        <div className="cart-overlay" onClick={() => setCartOpen(false)}></div>
-      )}
-
-      <section className={`cart-drawer ${cartOpen ? "open" : ""}`}>
-        <div className="drawer-handle"></div>
-
-        <div className="drawer-header">
-          <div>
-            <h2>ออเดอร์ของคุณ</h2>
-            <p>{totalItems} รายการ</p>
-          </div>
-          <button className="close-btn" onClick={() => setCartOpen(false)}>
-            ✕
-          </button>
-        </div>
-
-        <div className="form-card">
-          <h3 className="card-title">รายละเอียดการสั่งซื้อ</h3>
-          <p className="pickup-pill">{PICKUP_MESSAGE}</p>
-
-
-          <label className="field">
-            <span>หมายเหตุถึงร้าน</span>
-            <textarea
-              rows="3"
-              placeholder="เช่น ร้อนพิเศษ แยกน้ำแข็ง..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </label>
-        </div>
-
-        <div className="drawer-items">
-          {cart.map((item) => (
-            <div
-              className="drawer-item"
-              key={`${item.id}-${item.sugar}-${item.temperature}`}
-            >
-              <div className="drawer-item-left">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="drawer-thumb"
-                />
-                <div>
-                  <h4>{item.name}</h4>
-                  <p>
-                    {item.temperature} • {item.sugar}
-                  </p>
-                  <p>
-                    ฿{item.price} × {item.qty} ={" "}
-                    <strong>฿{item.price * item.qty}</strong>
-                  </p>
-                </div>
-              </div>
-
-              <div className="qty-box">
-                <button
-                  onClick={() =>
-                    updateQty(item.id, item.sugar, item.temperature, -1)
-                  }
-                >
-                  -
-                </button>
-                <span>{item.qty}</span>
-                <button
-                  onClick={() =>
-                    updateQty(item.id, item.sugar, item.temperature, 1)
-                  }
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="selected-total-card">
-          <div className="selected-total-row">
-            <span>จำนวนรวม</span>
-            <strong>{totalItems} แก้ว</strong>
-          </div>
-          <div className="selected-total-row selected-total-price">
-            <span>ยอดรวมทั้งหมด</span>
-            <strong>฿{totalPrice}</strong>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <h3 className="card-title">สรุปออเดอร์</h3>
-
-          <div className="summary-subcard">
-            {summaryRows.map((row) => (
-              <div key={row.label} className="summary-row">
-                <span>{row.label}</span>
-                <span>{row.value}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        
-          <label className="field customer-name-field">
-            <span className="field-label-with-icon">
-              <span className="field-label-icon" aria-hidden="true">
-                👤
-              </span>
-              <span>ชื่อลูกค้า</span>
-            </span>
+        <aside className="order-panel">
+          <h2>ออเดอร์ของคุณ</h2>
 
-            <div
-              className={`input-with-icon ${
-                nameValidationNotice ? "error-input" : ""
-              }`}
+          <div className="form-group">
+            <label>ชื่อลูกค้า</label>
+            <input
+              type="text"
+              placeholder="กรอกชื่อของคุณ"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>รูปแบบการรับ</label>
+            <select
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value)}
             >
-              <span className="input-icon" aria-hidden="true">
-                👤
-              </span>
-              <input
-                type="text"
-                placeholder="กรุณากรอกชื่อคุณก่อนส่งออเดอร์"
-                value={customerName}
-                onChange={(e) => {
-                  const nextName = e.target.value;
-                  setCustomerName(nextName);
-                  if (nameValidationNotice && nextName.trim()) {
-                    setNameValidationNotice(false);
-                  }
-                }}
-              />
-            </div>
+              <option value="รับที่ร้าน">รับที่ร้าน</option>
+              <option value="จัดส่ง">จัดส่ง</option>
+            </select>
+          </div>
 
-            {nameValidationNotice && (
-              <p className="error-text" role="alert">
-                กรุณากรอกชื่อคุณก่อนส่งออเดอร์
-              </p>
+          <div className="cart-list">
+            {cart.length === 0 ? (
+              <p className="empty-cart">ยังไม่มีเมนูในออเดอร์</p>
+            ) : (
+              cart.map((item) => (
+                <div className="cart-item" key={item.id}>
+                  <div>
+                    <strong>{item.name}</strong>
+                    <p>{item.price} บาท</p>
+                  </div>
+
+                  <div className="qty-control">
+                    <button onClick={() => decreaseQty(item.id)}>-</button>
+                    <span>{item.qty}</span>
+                    <button onClick={() => increaseQty(item.id)}>+</button>
+                  </div>
+
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeItem(item.id)}
+                  >
+                    ลบ
+                  </button>
+                </div>
+              ))
             )}
-          </label>
+          </div>
 
-        <button
-          type="button"
-          className="line-order-btn"
-          onClick={submitOrderToFirebase}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ผ่าน LINE"}
-        </button>
-      </section>
+          <div className="form-group">
+            <label>หมายเหตุถึงร้าน</label>
+            <textarea
+              placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล เพิ่มช็อต"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </div>
+
+          <div className="total-box">
+            <span>รวมทั้งหมด</span>
+            <strong>{totalPrice} บาท</strong>
+          </div>
+
+          {copied && <p className="copy-success">✅ คัดลอกออเดอร์แล้ว</p>}
+
+          <button className="copy-order-btn" onClick={copyOrder}>
+            📋 คัดลอกออเดอร์
+          </button>
+
+          <a
+            className="line-btn"
+            href={LINE_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            💬 เปิด LINE satitme
+          </a>
+
+          <button
+            className="submit-btn"
+            onClick={submitOrder}
+            disabled={sending}
+          >
+            {sending ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ให้ร้าน"}
+          </button>
+        </aside>
+      </main>
     </div>
   );
 }

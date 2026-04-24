@@ -46,7 +46,6 @@ function App() {
   const [customerName, setCustomerName] = useState("");
   const [orderType, setOrderType] = useState("รับที่ร้าน");
   const [note, setNote] = useState("");
-  const [copied, setCopied] = useState(false);
   const [sending, setSending] = useState(false);
 
   const addToCart = (item) => {
@@ -84,42 +83,7 @@ function App() {
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
 
-  const createOrderText = () => {
-    let text = "☕ ออเดอร์กาแฟใหม่\n";
-    text += "--------------------\n";
-
-    cart.forEach((item) => {
-      text += `${item.name} x ${item.qty} = ${item.price * item.qty} บาท\n`;
-    });
-
-    text += "--------------------\n";
-    text += `รวมทั้งหมด: ${totalPrice} บาท\n`;
-    text += `รูปแบบการรับ: ${orderType}\n`;
-    text += `ชื่อลูกค้า: ${customerName || "-"}\n`;
-
-    if (note.trim()) {
-      text += `หมายเหตุ: ${note}\n`;
-    }
-
-    return text;
-  };
-
-  const copyOrder = async () => {
-    if (cart.length === 0) {
-      alert("กรุณาเลือกเมนูก่อนคัดลอกออเดอร์");
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(createOrderText());
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      alert("คัดลอกไม่สำเร็จ กรุณาลองใหม่");
-    }
-  };
-
-  const submitOrder = async () => {
+  const submitOrderAndOpenLine = async () => {
     if (cart.length === 0) {
       alert("กรุณาเลือกเมนูก่อนส่งออเดอร์");
       return;
@@ -145,13 +109,12 @@ function App() {
     try {
       await push(ref(db, "orders"), orderData);
 
-      alert("ส่งออเดอร์เรียบร้อยแล้ว ร้านจะเห็นในหน้า Monitor");
-
       setCart([]);
       setCustomerName("");
       setOrderType("รับที่ร้าน");
       setNote("");
-      setCopied(false);
+
+      window.open(LINE_LINK, "_blank", "noopener,noreferrer");
     } catch {
       alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
     } finally {
@@ -275,23 +238,12 @@ function App() {
             <strong>{totalPrice} บาท</strong>
           </div>
 
-          {copied && <p className="copy-success">✅ คัดลอกออเดอร์แล้ว</p>}
-
-          <button className="copy-btn" onClick={copyOrder}>
-            📋 คัดลอกออเดอร์
-          </button>
-
-          <a
-            className="line-btn"
-            href={LINE_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            className="submit-btn"
+            onClick={submitOrderAndOpenLine}
+            disabled={sending}
           >
-            💬 เปิด LINE (satitme)
-          </a>
-
-          <button className="submit-btn" onClick={submitOrder} disabled={sending}>
-            {sending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ให้ร้าน"}
+            {sending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
           </button>
         </aside>
       </main>

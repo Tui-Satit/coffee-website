@@ -1,260 +1,329 @@
-import "./App.css";
-import { useState } from "react";
-import { ref, push, serverTimestamp } from "firebase/database";
-import { db } from "./firebase";
-
-const LINE_LINK = "https://line.me/ti/p/~satitme";
-
-const menuItems = [
-  {
-    id: 1,
-    name: "Espresso",
-    description: "กาแฟช็อตเข้มข้น กลมกล่อม",
-    price: 45,
-    image:
-      "https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?auto=format&fit=crop&w=900&q=80",
-    badge: "ยอดนิยม",
-  },
-  {
-    id: 2,
-    name: "Americano",
-    description: "กาแฟดำ หอม เข้ม ไม่หวาน",
-    price: 50,
-    image:
-      "https://images.unsplash.com/photo-1497636577773-f1231844b336?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: 3,
-    name: "Latte",
-    description: "กาแฟนมนุ่ม หอมละมุน",
-    price: 60,
-    image:
-      "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: 4,
-    name: "Cappuccino",
-    description: "กาแฟนมพร้อมฟองนมนุ่ม",
-    price: 60,
-    image:
-      "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=900&q=80",
-  },
-];
-
-function App() {
-  const [cart, setCart] = useState([]);
-  const [customerName, setCustomerName] = useState("");
-  const [orderType, setOrderType] = useState("รับที่ร้าน");
-  const [note, setNote] = useState("");
-  const [sending, setSending] = useState(false);
-
-  const addToCart = (item) => {
-    setCart((prev) => {
-      const found = prev.find((i) => i.id === item.id);
-
-      if (found) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, qty: i.qty + 1 } : i
-        );
-      }
-
-      return [...prev, { ...item, qty: 1 }];
-    });
-  };
-
-  const increaseQty = (id) => {
-    setCart((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, qty: i.qty + 1 } : i))
-    );
-  };
-
-  const decreaseQty = (id) => {
-    setCart((prev) =>
-      prev
-        .map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i))
-        .filter((i) => i.qty > 0)
-    );
-  };
-
-  const removeItem = (id) => {
-    setCart((prev) => prev.filter((i) => i.id !== id));
-  };
-
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
-
-  const submitOrderAndOpenLine = async () => {
-    if (cart.length === 0) {
-      alert("กรุณาเลือกเมนูก่อนส่งออเดอร์");
-      return;
-    }
-
-    if (!customerName.trim()) {
-      alert("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
-      return;
-    }
-
-    setSending(true);
-
-    const orderData = {
-      customerName,
-      orderType,
-      note,
-      items: cart,
-      totalPrice,
-      status: "new",
-      createdAt: serverTimestamp(),
-    };
-
-    try {
-      await push(ref(db, "orders"), orderData);
-
-      setCart([]);
-      setCustomerName("");
-      setOrderType("รับที่ร้าน");
-      setNote("");
-
-      window.open(LINE_LINK, "_blank", "noopener,noreferrer");
-    } catch {
-      alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-logo">☕</div>
-          <strong>ร้านกาแฟมินิมอล</strong>
-        </div>
-
-        <nav className="nav">
-          <span>หน้าแรก</span>
-          <span>เมนูกาแฟ</span>
-        </nav>
-
-        <div className="cart-badge">🛒 {totalQty}</div>
-      </header>
-
-      <main className="page">
-        <section className="menu-area">
-          <div className="hero">
-            <p className="eyebrow">Fresh coffee every day</p>
-            <h1>กาแฟคุณตุ่ย ☕</h1>
-            <p>เมนูชัดเจน สั่งง่าย รับที่ร้านได้ทันที</p>
-          </div>
-
-          <h2 className="section-title">☕ เมนูกาแฟยอดนิยม</h2>
-
-          <div className="menu-grid">
-            {menuItems.map((item) => (
-              <article className="coffee-card" key={item.id}>
-                <div className="coffee-image-wrap">
-                  <img src={item.image} alt={item.name} />
-                  {item.badge && <span className="badge">{item.badge}</span>}
-                  <button className="heart-btn">♡</button>
-                </div>
-
-                <div className="coffee-info">
-                  <h3>{item.name}</h3>
-                  <p>{item.description}</p>
-
-                  <div className="coffee-footer">
-                    <strong>{item.price} บาท</strong>
-                    <button onClick={() => addToCart(item)}>＋ เพิ่ม</button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <aside className="order-card">
-          <h2>🛍️ ออเดอร์ของคุณ</h2>
-
-          <label>ชื่อลูกค้า</label>
-          <input
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="กรอกชื่อของคุณ"
-          />
-
-          <label>รูปแบบการรับ</label>
-          <select
-            value={orderType}
-            onChange={(e) => setOrderType(e.target.value)}
-          >
-            <option value="รับที่ร้าน">รับที่ร้าน</option>
-            <option value="จัดส่ง">จัดส่ง</option>
-          </select>
-
-          <div className="divider" />
-
-          <h3>รายการสั่งซื้อ</h3>
-
-          <div className="cart-list">
-            {cart.length === 0 ? (
-              <div className="empty-cart">
-                <span>☕</span>
-                <strong>ยังไม่มีเมนูในออเดอร์</strong>
-                <p>เลือกเมนูที่คุณชอบได้เลย</p>
-              </div>
-            ) : (
-              cart.map((item) => (
-                <div className="cart-item" key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>{item.price} บาท</p>
-                  </div>
-
-                  <div className="qty">
-                    <button onClick={() => decreaseQty(item.id)}>-</button>
-                    <span>{item.qty}</span>
-                    <button onClick={() => increaseQty(item.id)}>+</button>
-                  </div>
-
-                  <button
-                    className="remove-btn"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    ลบ
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-
-          <label>หมายเหตุถึงร้าน</label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="เช่น หวานน้อย ไม่ใส่น้ำตาล เพิ่มช็อต"
-          />
-
-          <div className="total-row">
-            <span>รวมทั้งหมด</span>
-            <strong>{totalPrice} บาท</strong>
-          </div>
-
-          <button
-            className="submit-btn"
-            onClick={submitOrderAndOpenLine}
-            disabled={sending}
-          >
-            {sending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
-          </button>
-        </aside>
-      </main>
-
-      <footer className="features">
-        <div>🌿 สดใหม่ทุกแก้ว</div>
-        <div>❤️ รสชาติดี กลมกล่อม</div>
-        <div>🏪 รับที่ร้าน สะดวก รวดเร็ว</div>
-      </footer>
-    </div>
-  );
+* {
+  box-sizing: border-box;
 }
 
-export default App;
+body {
+  margin: 0;
+  font-family: "Inter", Arial, sans-serif;
+  background: #f6f3ef;
+  color: #17211b;
+}
+
+/* ===== Layout ===== */
+.app {
+  min-height: 100vh;
+}
+
+/* ===== Topbar ===== */
+.topbar {
+  height: 76px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e7e2dc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 52px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  background: #006241;
+  color: #fff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  box-shadow: 0 10px 22px rgba(0, 98, 65, 0.25);
+}
+
+.nav {
+  display: flex;
+  gap: 32px;
+  font-weight: 700;
+  color: #24352c;
+}
+
+.cart-badge {
+  background: #006241;
+  color: white;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 800;
+}
+
+/* ===== Main ===== */
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: grid;
+  grid-template-columns: 1fr 390px;
+  gap: 44px;
+}
+
+/* ===== Hero ===== */
+.hero {
+  margin-bottom: 36px;
+}
+
+.eyebrow {
+  color: #006241;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.hero h1 {
+  font-size: 56px;
+  margin: 0 0 10px;
+}
+
+.hero p {
+  color: #6b7280;
+}
+
+/* ===== Menu ===== */
+.section-title {
+  font-size: 26px;
+  margin-bottom: 20px;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.coffee-card {
+  background: white;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+  transition: 0.25s;
+}
+
+.coffee-card:hover {
+  transform: translateY(-6px);
+}
+
+.coffee-image-wrap {
+  height: 200px;
+  position: relative;
+}
+
+.coffee-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #006241;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.heart-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0,0,0,0.3);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+}
+
+.coffee-info {
+  padding: 16px;
+}
+
+.coffee-info h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.coffee-info p {
+  margin: 6px 0;
+  color: #666;
+}
+
+.coffee-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.coffee-footer strong {
+  color: #006241;
+  font-size: 20px;
+}
+
+.coffee-footer button {
+  background: #006241;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* ===== Order Card ===== */
+.order-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 100px;
+}
+
+.order-card h2 {
+  margin-bottom: 16px;
+}
+
+.order-card label {
+  font-weight: 700;
+  display: block;
+  margin-top: 14px;
+}
+
+.order-card input,
+.order-card select,
+.order-card textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+.order-card textarea {
+  min-height: 80px;
+}
+
+/* ===== Cart ===== */
+.cart-list {
+  margin-top: 10px;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 20px;
+  background: #f9f5f1;
+  border-radius: 12px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9f5f1;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+.qty {
+  display: flex;
+  gap: 6px;
+}
+
+.qty button {
+  background: #006241;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.remove-btn {
+  background: #fee2e2;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+/* ===== Total ===== */
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-weight: bold;
+}
+
+/* ===== BUTTON (สำคัญ) ===== */
+.submit-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  font-size: 16px;
+  font-weight: 900;
+  background: #004b2f;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.submit-btn:hover {
+  background: #006241;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+}
+
+/* ===== Footer ===== */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 30px;
+}
+
+.features div {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-card {
+    position: static;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+}

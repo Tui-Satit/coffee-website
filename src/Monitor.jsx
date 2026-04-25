@@ -115,7 +115,7 @@ function Monitor() {
           orders.map((o) => (
             <div
               key={o.id}
-              className={`order-card ${o.status === "new" ? "new-order" : ""}`}
+              className={`order-card ${o.status === "new" ? "new-order alarm-blink" : ""}`}
             >
               <div className="order-name">
                 👤 New {o.customerName || "ไม่ระบุชื่อ"}

@@ -111,6 +111,37 @@ function Monitor() {
     return price * qty;
   };
 
+
+  const formatOrderTime = (createdAt) => {
+    if (createdAt == null) {
+      return "-";
+    }
+
+    if (typeof createdAt === "object" && createdAt?.seconds) {
+      createdAt = createdAt.seconds * 1000;
+    }
+
+    const parsedTime =
+      typeof createdAt === "number"
+        ? createdAt
+        : typeof createdAt === "string"
+        ? Date.parse(createdAt)
+        : NaN;
+
+    if (!Number.isFinite(parsedTime)) {
+      return "-";
+    }
+
+    const formattedTime = new Intl.DateTimeFormat("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "Asia/Bangkok",
+    }).format(new Date(parsedTime));
+
+    return `${formattedTime} น.`;
+  };
+
   return (
     <div className="monitor-page">
       <header className="monitor-header">
@@ -140,6 +171,7 @@ function Monitor() {
             >
               <h2>👤 New {o.customerName || "ไม่ระบุชื่อ"}</h2>
 
+              <p>⏰ เวลา: {formatOrderTime(o.createdAt)}</p>
               <p>📝 หมายเหตุ: {o.note || "-"}</p>
               <p>💵 ราคารวม: {getTotal(o)} บาท</p>
               <p>📦 สถานะ: {o.status || "-"}</p>

@@ -1,123 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { onValue, ref } from "firebase/database";
-import { db } from "./firebase";
 import "./Monitor.css";
-
-const ALERT_SOUND_SRC = "/alert.mp3";
-const BURST_DELAYS_MS = [0, 180, 360, 700];
-const REPEAT_ALERT_MS = 2500;
+import { useEffect, useRef, useState } from "react";
+import { ref, onValue, update } from "firebase/database";
+import { db } from "./firebase";
 
 function Monitor() {
   const [orders, setOrders] = useState([]);
-  const [hasUnacceptedOrder, setHasUnacceptedOrder] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
-
-  const previousOrderCountRef = useRef(0);
-  const audioTemplateRef = useRef(null);
-  const repeatIntervalRef = useRef(null);
-  const burstTimeoutsRef = useRef([]);
-  const activeAudiosRef = useRef([]);
-
-  const clearBurstTimeouts = useCallback(() => {
-    burstTimeoutsRef.current.forEach((id) => clearTimeout(id));
-    burstTimeoutsRef.current = [];
-  }, []);
-
-  const stopAllAudio = useCallback(() => {
-    clearBurstTimeouts();
-
-    activeAudiosRef.current.forEach((audio) => {
-      try {
-        audio.pause();
-        audio.currentTime = 0;
-      } catch (err) {
-        console.error("stop audio error:", err);
-      }
-    });
-    activeAudiosRef.current = [];
-
-    if (audioTemplateRef.current) {
-      try {
-        audioTemplateRef.current.pause();
-        audioTemplateRef.current.currentTime = 0;
-      } catch (err) {
-        console.error("template audio stop error:", err);
-      }
-    }
-
-    if ("vibrate" in navigator) {
-      navigator.vibrate(0);
-    }
-  }, [clearBurstTimeouts]);
-
-  const playAlertBurst = useCallback(() => {
-    if (!soundEnabled || !audioTemplateRef.current) return;
-
-    clearBurstTimeouts();
-
-    BURST_DELAYS_MS.forEach((delay, index) => {
-      const timeoutId = setTimeout(() => {
-        const alertAudio = audioTemplateRef.current.cloneNode();
-        alertAudio.volume = 1.0;
-        alertAudio.playbackRate = index === 0 ? 1.0 : 1.12;
-
-        activeAudiosRef.current.push(alertAudio);
-
-        alertAudio
-          .play()
-          .catch((err) => console.error("Audio play failed:", err))
-          .finally(() => {
-            activeAudiosRef.current = activeAudiosRef.current.filter(
-              (audio) => audio !== alertAudio
-            );
-          });
-      }, delay);
-
-      burstTimeoutsRef.current.push(timeoutId);
-    });
-  }, [clearBurstTimeouts, soundEnabled]);
+  const audioRef = useRef(null);
+  const firstLoadDone = useRef(false);
 
   useEffect(() => {
-    const audio = new Audio(ALERT_SOUND_SRC);
-    audio.volume = 1.0;
-    audio.preload = "auto";
-    audioTemplateRef.current = audio;
-
-    return () => {
-      if (repeatIntervalRef.current) {
-        clearInterval(repeatIntervalRef.current);
-        repeatIntervalRef.current = null;
-      }
-      stopAllAudio();
-    };
-  }, [stopAllAudio]);
-
-  const enableSound = async () => {
-    try {
-      if (!audioTemplateRef.current) return;
-
-      await audioTemplateRef.current.play();
-      audioTemplateRef.current.pause();
-      audioTemplateRef.current.currentTime = 0;
-
-      setSoundEnabled(true);
-      alert("เปิดเสียงแจ้งเตือนแล้ว 🔔");
-    } catch (err) {
-      console.error("Enable sound failed:", err);
-      alert("ไม่สามารถเปิดเสียงได้ ลองกดอีกครั้ง");
-    }
-  };
-
-  const handleAcceptOrder = () => {
-    setHasUnacceptedOrder(false);
-
-    if (repeatIntervalRef.current) {
-      clearInterval(repeatIntervalRef.current);
-      repeatIntervalRef.current = null;
-    }
-
-    stopAllAudio();
-  };
+    audioRef.current = new Audio("/alert.mp3");
+    audioRef.current.loop = true;
+    audioRef.current.volume = 1;
+  }, []);
 
   useEffect(() => {
     const ordersRef = ref(db, "orders");
@@ -125,126 +21,141 @@ function Monitor() {
     const unsubscribe = onValue(ordersRef, (snapshot) => {
       const data = snapshot.val();
 
-      const orderList = data
-        ? Object.entries(data).map(([id, value]) => ({
-            id,
-            ...value,
-          }))
-        : [];
+      if (!data) {
+        setOrders([]);
+        firstLoadDone.current = true;
+        return;
+      }
 
-      if (
-        orderList.length > previousOrderCountRef.current &&
-        previousOrderCountRef.current !== 0
-      ) {
-        setHasUnacceptedOrder(true);
+      const orderList = Object.entries(data)
+        .map(([id, order]) => ({
+          id,
+          ...order,
+        }))
+        .reverse();
 
-        if (soundEnabled) {
-          playAlertBurst();
+      setOrders(orderList);
 
-          if ("vibrate" in navigator) {
-            navigator.vibrate([300, 150, 300, 150, 600]);
-          }
+      if (firstLoadDone.current && soundEnabled) {
+        const hasNewOrder = orderList.some((order) => order.status === "new");
+
+        if (hasNewOrder && audioRef.current) {
+          audioRef.current.play().catch((error) => {
+            console.log("Audio play blocked:", error);
+          });
         }
       }
 
-      previousOrderCountRef.current = orderList.length;
-      setOrders(orderList.reverse());
+      firstLoadDone.current = true;
     });
 
     return () => unsubscribe();
-  }, [playAlertBurst, soundEnabled]);
+  }, [soundEnabled]);
 
-  useEffect(() => {
-    if (hasUnacceptedOrder && soundEnabled) {
-      playAlertBurst();
+  const enableSound = async () => {
+    setSoundEnabled(true);
 
-      if ("vibrate" in navigator) {
-        navigator.vibrate([300, 150, 300, 150, 600]);
+    try {
+      if (audioRef.current) {
+        audioRef.current.volume = 1;
+        await audioRef.current.play();
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
 
-      if (repeatIntervalRef.current) {
-        clearInterval(repeatIntervalRef.current);
-      }
-
-      repeatIntervalRef.current = setInterval(() => {
-        playAlertBurst();
-
-        if ("vibrate" in navigator) {
-          navigator.vibrate([220, 120, 220, 120, 400]);
-        }
-      }, REPEAT_ALERT_MS);
-    } else {
-      if (repeatIntervalRef.current) {
-        clearInterval(repeatIntervalRef.current);
-        repeatIntervalRef.current = null;
-      }
-      stopAllAudio();
+      alert("เปิดเสียงแจ้งเตือนแล้ว");
+    } catch (error) {
+      console.log("Enable sound error:", error);
     }
+  };
 
-    return () => {
-      if (repeatIntervalRef.current) {
-        clearInterval(repeatIntervalRef.current);
-        repeatIntervalRef.current = null;
+  const acceptOrder = async (orderId) => {
+    try {
+      await update(ref(db, `orders/${orderId}`), {
+        status: "accepted",
+      });
+
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
-    };
-  }, [hasUnacceptedOrder, playAlertBurst, soundEnabled, stopAllAudio]);
+    } catch (error) {
+      console.error("Accept order error:", error);
+      alert("กดรับออเดอร์ไม่สำเร็จ");
+    }
+  };
+
+  const formatTotal = (order) => {
+    return order.total || order.totalPrice || 0;
+  };
+
+  const formatItemPrice = (item) => {
+    const price = item.price || 0;
+    const qty = item.qty || 1;
+    return price * qty;
+  };
 
   return (
-    <div className={`monitor-page ${hasUnacceptedOrder ? "monitor-page-alert" : ""}`}>
-      {hasUnacceptedOrder && (
-        <div className="fullscreen-alarm alert-blink">
-          <div className="fullscreen-alarm-content">
-            <div className="fullscreen-alarm-icon">🚨</div>
-            <div className="fullscreen-alarm-title">มีออเดอร์ใหม่!</div>
-            <div className="fullscreen-alarm-subtitle">
-              กรุณากดรับออเดอร์เพื่อหยุดเสียงและหยุดกระพริบ
-            </div>
-
-            <button
-              onClick={handleAcceptOrder}
-              className="accept-button fullscreen-accept-button"
-            >
-              ✅ รับออเดอร์แล้ว
-            </button>
-          </div>
+    <div className="monitor-page">
+      <header className="monitor-header">
+        <div>
+          <h1>📺 Monitor Orders</h1>
+          <p>ดูออเดอร์ใหม่จากลูกค้าแบบ Real-time</p>
         </div>
-      )}
 
-      <div className="monitor-topbar">
-        <button
-          onClick={enableSound}
-          className={`sound-button ${soundEnabled ? "sound-button-ready" : ""}`}
-        >
-          {soundEnabled ? "🔔 เสียงพร้อมแล้ว" : "🔊 เปิดเสียงแจ้งเตือน"}
+        <button className="sound-button" onClick={enableSound}>
+          🔊 เปิดเสียงแจ้งเตือน
         </button>
-      </div>
+      </header>
 
-      <h1 className="monitor-title">☕ Orders Monitor</h1>
-
-      {orders.length === 0 ? (
-        <p className="empty-text">ยังไม่มีออเดอร์</p>
-      ) : (
-        orders.map((o) => (
-          <div key={o.id} className="order-card">
-            <div className="order-name">👤 {o.customerName || "ไม่ระบุชื่อ"}</div>
-            <div>📝 หมายเหตุ: {o.note || "-"}</div>
-            <div>💵 ราคารวม: {o.totalPrice || "-"} บาท</div>
-            <div>📦 สถานะ: {o.status || "-"}</div>
-
-            {o.items && o.items.length > 0 && (
-              <div className="order-items">
-                <strong>☕ รายการ:</strong>
-                {o.items.map((item, index) => (
-                  <div key={index}>
-                    - {item.name} ({item.temperature || "Cold"}) •{" "}
-                    {item.sugar || "ปกติ"} x {item.qty}
-                  </div>
-                ))}
+      <main className="monitor-content">
+        {orders.length === 0 ? (
+          <p className="empty-text">ยังไม่มีออเดอร์</p>
+        ) : (
+          orders.map((o) => (
+            <div
+              key={o.id}
+              className={`order-card ${o.status === "new" ? "new-order" : ""}`}
+            >
+              <div className="order-name">
+                👤 New {o.customerName || "ไม่ระบุชื่อ"}
               </div>
-            )}
-          </div>
-        ))
-      )}
+
+              <div>📝 หมายเหตุ: {o.note || "-"}</div>
+
+              <div>
+                💵 ราคารวม: {formatTotal(o)} บาท
+              </div>
+
+              <div>📦 สถานะ: {o.status || "-"}</div>
+
+              {o.items && o.items.length > 0 && (
+                <div className="order-items">
+                  <strong>☕ รายการ:</strong>
+
+                  {o.items.map((item, index) => (
+                    <div key={index}>
+                      - {item.name}{" "}
+                      {item.temperature ? `(${item.temperature})` : ""}{" "}
+                      {item.sugar ? `• ${item.sugar}` : ""} x {item.qty || 1} ={" "}
+                      {formatItemPrice(item)} บาท
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {o.status === "new" && (
+                <button
+                  className="accept-button"
+                  onClick={() => acceptOrder(o.id)}
+                >
+                  ✅ รับออเดอร์แล้ว
+                </button>
+              )}
+            </div>
+          ))
+        )}
+      </main>
     </div>
   );
 }

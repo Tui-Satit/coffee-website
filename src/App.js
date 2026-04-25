@@ -149,18 +149,14 @@ function App() {
           <div className="hero-content">
             <p className="eyebrow">Minimal Coffee</p>
             <h2>กาแฟดี ๆ สำหรับวันทำงานของคุณ</h2>
-            <p>
-              เลือกเมนูที่ชอบ ส่งออเดอร์ให้ร้าน แล้วดูรายละเอียดที่หน้า Monitor
-            </p>
-            <a href="#menu" className="hero-button">
-              ดูเมนูกาแฟ
-            </a>
+           
+           
           </div>
         </section>
 
         <section id="menu" className="section">
           <div className="section-title">
-            <p>Our Menu</p>
+          
             <h2>เมนูกาแฟ</h2>
           </div>
 

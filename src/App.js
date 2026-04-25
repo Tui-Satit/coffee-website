@@ -10,28 +10,32 @@ const menuItems = [
     id: 1,
     name: "Americano",
     price: 55,
-    image: "/images/americano.jpg",
+    image:
+      "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=600&q=80",
     desc: "เข้ม หอม สดชื่น",
   },
   {
     id: 2,
     name: "Latte",
     price: 65,
-    image: "/images/latte.jpg",
+    image:
+      "https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?auto=format&fit=crop&w=600&q=80",
     desc: "นุ่ม ละมุน กลมกล่อม",
   },
   {
     id: 3,
     name: "Cappuccino",
     price: 65,
-    image: "/images/cappuccino.jpg",
+    image:
+      "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80",
     desc: "หอมกาแฟ ฟองนมนุ่ม",
   },
   {
     id: 4,
     name: "Mocha",
     price: 70,
-    image: "/images/mocha.jpg",
+    image:
+      "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=600&q=80",
     desc: "กาแฟผสมช็อกโกแลต",
   },
 ];
@@ -264,14 +268,16 @@ ${note || "-"}
               <strong>รวมทั้งหมด</strong>
               <strong>{total} บาท</strong>
             </div>
-
+            
             <button
-              className="send-button"
-              onClick={sendOrder}
-              disabled={isSending || cart.length === 0}
-            >
-              {isSending ? "กำลังส่งออเดอร์..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
-            </button>
+  className="send-button"
+  onClick={sendOrder}
+  disabled={isSending || cart.length === 0}
+>
+  {isSending ? "⏳ กำลังส่ง..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
+</button>
+           
+
           </div>
         </section>
 

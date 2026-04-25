@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ref, push, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
-const PERSONAL_LINE_ID = "satitme";
+const LINE_OA_ID = "@575kncik";
 
 const menuItems = [
   {
@@ -97,10 +97,13 @@ function App() {
 
     setIsSending(true);
 
+    const trimmedCustomerName = customerName.trim();
+    const trimmedNote = note.trim();
+
     const orderData = {
-      customerName: customerName.trim(),
+      customerName: trimmedCustomerName,
       orderType,
-      note: note.trim(),
+      note: trimmedNote,
       items: cart,
       total,
       totalQty,
@@ -108,10 +111,21 @@ function App() {
       createdAt: serverTimestamp(),
     };
 
+    const orderLines = [
+      "☕ ออเดอร์ใหม่จากเว็บไซต์",
+      `👤 ชื่อลูกค้า: ${trimmedCustomerName}`,
+      `📍 รับสินค้า: ${orderType}`,
+      "📦 รายการ:",
+      ...cart.map((item) => `- ${item.name} x ${item.qty} = ${item.price * item.qty} บาท`),
+      `💵 ราคารวม: ${total} บาท`,
+      `📝 หมายเหตุ: ${trimmedNote || "-"}`,
+    ];
+
+    const encodedOrderMessage = encodeURIComponent(orderLines.join("\n"));
+    const lineUrl = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${encodedOrderMessage}`;
+
     try {
       await push(ref(db, "orders"), orderData);
-
-      const lineUrl = `https://line.me/ti/p/~${PERSONAL_LINE_ID}`;
       window.location.href = lineUrl;
 
       setCart([]);
@@ -244,7 +258,7 @@ function App() {
             >
               {isSending
                 ? "⏳ กำลังส่งออเดอร์..."
-                : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
+                : "🚀 ส่งออเดอร์ผ่าน LINE OA"}
             </button>
           </div>
         </section>

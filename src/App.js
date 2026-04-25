@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ref, push, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
-const SHOP_LINE_ID = "satitme";
+const PERSONAL_LINE_ID = "satitme";
 
 const menuItems = [
   {
@@ -51,59 +51,35 @@ function App() {
   const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
 
   const addToCart = (menu) => {
-    setCart((prevCart) => {
-      const found = prevCart.find((item) => item.id === menu.id);
+    setCart((prev) => {
+      const found = prev.find((item) => item.id === menu.id);
 
       if (found) {
-        return prevCart.map((item) =>
+        return prev.map((item) =>
           item.id === menu.id ? { ...item, qty: item.qty + 1 } : item
         );
       }
 
-      return [...prevCart, { ...menu, qty: 1 }];
+      return [...prev, { ...menu, qty: 1 }];
     });
   };
 
   const increaseQty = (id) => {
-    setCart((prevCart) =>
-      prevCart.map((item) =>
+    setCart((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, qty: item.qty + 1 } : item
       )
     );
   };
 
   const decreaseQty = (id) => {
-    setCart((prevCart) =>
-      prevCart
+    setCart((prev) =>
+      prev
         .map((item) =>
           item.id === id ? { ...item, qty: item.qty - 1 } : item
         )
         .filter((item) => item.qty > 0)
     );
-  };
-
-  const createLineMessage = () => {
-    const orderList = cart
-      .map(
-        (item, index) =>
-          `${index + 1}. ${item.name} x ${item.qty} = ${
-            item.price * item.qty
-          } บาท`
-      )
-      .join("\n");
-
-    return `☕ ออเดอร์ใหม่จากร้านกาแฟ
-
-👤 ชื่อลูกค้า: ${customerName}
-📦 รูปแบบ: ${orderType}
-
-🧾 รายการสั่งซื้อ:
-${orderList}
-
-📝 หมายเหตุ:
-${note || "-"}
-
-💰 รวมทั้งหมด: ${total} บาท`;
   };
 
   const sendOrder = async () => {
@@ -135,11 +111,7 @@ ${note || "-"}
     try {
       await push(ref(db, "orders"), orderData);
 
-      const message = createLineMessage();
-      const lineUrl = `https://line.me/R/oaMessage/${SHOP_LINE_ID}/?${encodeURIComponent(
-        message
-      )}`;
-
+      const lineUrl = `https://line.me/ti/p/~${PERSONAL_LINE_ID}`;
       window.location.href = lineUrl;
 
       setCart([]);
@@ -181,7 +153,7 @@ ${note || "-"}
             <p className="eyebrow">Minimal Coffee</p>
             <h2>กาแฟดี ๆ สำหรับวันทำงานของคุณ</h2>
             <p>
-              เลือกเมนูที่ชอบ เพิ่มลงออเดอร์ แล้วส่งให้ร้านผ่าน LINE ได้ทันที
+              เลือกเมนูที่ชอบ ส่งออเดอร์ให้ร้าน แล้วดูรายละเอียดที่หน้า Monitor
             </p>
             <a href="#menu" className="hero-button">
               ดูเมนูกาแฟ
@@ -202,6 +174,7 @@ ${note || "-"}
                 <div className="menu-card-body">
                   <h3>{menu.name}</h3>
                   <p>{menu.desc}</p>
+
                   <div className="menu-bottom">
                     <strong>{menu.price} บาท</strong>
                     <button onClick={() => addToCart(menu)}>เพิ่ม</button>
@@ -244,7 +217,9 @@ ${note || "-"}
                   <div className="cart-item" key={item.id}>
                     <div>
                       <h4>{item.name}</h4>
-                      <p>{item.price} บาท</p>
+                      <p>
+                        {item.price} บาท x {item.qty}
+                      </p>
                     </div>
 
                     <div className="qty-control">
@@ -268,16 +243,16 @@ ${note || "-"}
               <strong>รวมทั้งหมด</strong>
               <strong>{total} บาท</strong>
             </div>
-            
-            <button
-  className="send-button"
-  onClick={sendOrder}
-  disabled={isSending || cart.length === 0}
->
-  {isSending ? "⏳ กำลังส่ง..." : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
-</button>
-           
 
+            <button
+              className="send-button"
+              onClick={sendOrder}
+              disabled={isSending || cart.length === 0}
+            >
+              {isSending
+                ? "⏳ กำลังส่งออเดอร์..."
+                : "🚀 ส่งออเดอร์ + เพิ่มเพื่อน LINE"}
+            </button>
           </div>
         </section>
 

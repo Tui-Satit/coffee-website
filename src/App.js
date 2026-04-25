@@ -189,14 +189,6 @@ function App() {
           <div className="order-card">
             <h2>รายการสั่งซื้อ</h2>
 
-            <label>ชื่อลูกค้า</label>
-            <input
-              type="text"
-              placeholder="เช่น คุณตุ่ย"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-            />
-
             <label>รูปแบบการรับสินค้า</label>
             <select
               value={orderType}
@@ -239,6 +231,13 @@ function App() {
               onChange={(e) => setNote(e.target.value)}
             />
 
+             <label>ชื่อลูกค้า</label><p className="customer-name-note">*กรุณากรอกชื่อของคุณก่อนส่งออเดอร์</p>
+            <input
+              type="text"
+              placeholder="เช่น คุณตุ่ย"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
             <div className="total-row">
               <strong>รวมทั้งหมด</strong>
               <strong>{total} บาท</strong>

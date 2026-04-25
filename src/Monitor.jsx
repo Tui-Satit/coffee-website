@@ -14,7 +14,7 @@ function Monitor() {
     audioRef.current = new Audio("/alert.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 1;
-  }, []);
+  }, [])
 
   useEffect(() => {
     const ordersRef = ref(db, "orders");
@@ -119,9 +119,12 @@ function Monitor() {
           <p>ดูออเดอร์ใหม่แบบ Real-time</p>
         </div>
 
-        <button className="sound-button" onClick={enableSound}>
-          🔊 เปิดเสียงแจ้งเตือน
-        </button>
+       <button
+  className={`sound-button ${soundEnabled ? "active" : ""}`}
+  onClick={enableSound}
+>
+  {soundEnabled ? "✅ เปิดแจ้งเตือนแล้ว" : "🔊 เปิดเสียงแจ้งเตือน"}
+</button>
       </header>
 
       <main className="monitor-content">

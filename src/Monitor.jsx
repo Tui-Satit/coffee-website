@@ -10,14 +10,12 @@ function Monitor() {
   const audioRef = useRef(null);
   const firstLoadDone = useRef(false);
 
-  // โหลดเสียง
   useEffect(() => {
     audioRef.current = new Audio("/alert.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 1;
   }, []);
 
-  // ฟัง Firebase
   useEffect(() => {
     const ordersRef = ref(db, "orders");
 
@@ -39,12 +37,25 @@ function Monitor() {
 
       setOrders(orderList);
 
-      // 🔊 เล่นเสียงเมื่อมี order ใหม่
       if (firstLoadDone.current && soundEnabled) {
         const hasNew = orderList.some((o) => o.status === "new");
 
-        if (hasNew && audioRef.current) {
-          audioRef.current.play().catch(() => {});
+        if (hasNew) {
+          if (audioRef.current) {
+            audioRef.current.play().catch(() => {});
+          }
+
+          if (navigator.vibrate) {
+            navigator.vibrate([500, 200, 500, 200, 500]);
+          }
+
+          setTimeout(() => {
+            const firstNewOrder = document.querySelector(".new-order-card");
+            firstNewOrder?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }, 300);
         }
       }
 
@@ -54,49 +65,58 @@ function Monitor() {
     return () => unsubscribe();
   }, [soundEnabled]);
 
-  // เปิดเสียง (สำคัญสำหรับ mobile)
   const enableSound = async () => {
     setSoundEnabled(true);
 
     try {
-      await audioRef.current.play();
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      if (audioRef.current) {
+        await audioRef.current.play();
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
 
       alert("เปิดเสียงแจ้งเตือนแล้ว 🔊");
-    } catch (e) {
-      console.log(e);
+    } catch (error) {
+      console.log("Enable sound error:", error);
     }
   };
 
-  // รับออเดอร์
   const acceptOrder = async (id) => {
-    await update(ref(db, `orders/${id}`), {
-      status: "accepted",
-    });
+    try {
+      await update(ref(db, `orders/${id}`), {
+        status: "accepted",
+      });
 
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+
+      if (navigator.vibrate) {
+        navigator.vibrate(0);
+      }
+    } catch (error) {
+      console.error("Accept order error:", error);
+      alert("รับออเดอร์ไม่สำเร็จ");
     }
   };
 
-  // เช็คมี order ใหม่ไหม
-  const hasNewOrder = orders.some((o) => o.status === "new");
+  const getTotal = (order) => {
+    return order.total || order.totalPrice || 0;
+  };
+
+  const getItemTotal = (item) => {
+    const price = item.price || 0;
+    const qty = item.qty || 1;
+    return price * qty;
+  };
 
   return (
     <div className="monitor-page">
-      {/* 🚨 FULLSCREEN ALERT */}
-      {hasNewOrder && (
-        <div className="fullscreen-alarm">
-          🚨 มีออเดอร์ใหม่! กรุณากดรับออเดอร์ 🚨
-        </div>
-      )}
-
       <header className="monitor-header">
         <div>
           <h1>📺 Monitor Orders</h1>
-          <p>ดูออเดอร์แบบ Real-time</p>
+          <p>ดูออเดอร์ใหม่แบบ Real-time</p>
         </div>
 
         <button className="sound-button" onClick={enableSound}>
@@ -112,34 +132,33 @@ function Monitor() {
             <div
               key={o.id}
               className={`order-card ${
-                o.status === "new" ? "alarm-blink" : ""
+                o.status === "new" ? "new-order-card" : ""
               }`}
             >
-              <h2>👤 New {o.customerName || "-"}</h2>
+              <h2>👤 New {o.customerName || "ไม่ระบุชื่อ"}</h2>
 
               <p>📝 หมายเหตุ: {o.note || "-"}</p>
+              <p>💵 ราคารวม: {getTotal(o)} บาท</p>
+              <p>📦 สถานะ: {o.status || "-"}</p>
 
-              <p>💵 ราคารวม: {o.total || 0} บาท</p>
+              {o.items && o.items.length > 0 && (
+                <div className="order-items">
+                  <strong>☕ รายการ:</strong>
 
-              <p>📦 สถานะ: {o.status}</p>
-
-              <div className="order-items">
-                <strong>☕ รายการ:</strong>
-
-                {o.items?.map((item, i) => (
-                  <div key={i}>
-                    - {item.name} x {item.qty} ={" "}
-                    {(item.price || 0) * (item.qty || 1)} บาท
-                  </div>
-                ))}
-              </div>
+                  {o.items.map((item, index) => (
+                    <div key={index}>
+                      - {item.name} x {item.qty || 1} = {getItemTotal(item)} บาท
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {o.status === "new" && (
                 <button
                   className="accept-button"
                   onClick={() => acceptOrder(o.id)}
                 >
-                  ✅ รับออเดอร์
+                  ✅ รับออเดอร์แล้ว
                 </button>
               )}
             </div>

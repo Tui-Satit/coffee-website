@@ -1,218 +1,161 @@
+* {
+  box-sizing: border-box;
+}
+
 .monitor-page {
   min-height: 100vh;
   padding: 20px;
-  font-family: Arial, sans-serif;
-  background: #f6f7fb;
-  transition: background 0.25s ease;
+  background: #f4f6f8;
+  font-family: "Prompt", sans-serif;
+  color: #1f2937;
 }
 
-.monitor-page-alert {
-  background: #2a0000;
-}
-
-.monitor-topbar {
+.monitor-header {
   display: flex;
-  justify-content: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.monitor-header h1 {
+  font-size: 30px;
+  margin: 0;
+  font-weight: 900;
+}
+
+.monitor-header p {
+  margin: 4px 0 0;
+  color: #6b7280;
 }
 
 .sound-button {
-  padding: 14px 18px;
-  font-size: 18px;
-  font-weight: 700;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  background: #1f1f1f;
+  background: #111827;
   color: white;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  border: none;
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(17, 24, 39, 0.22);
 }
 
-.sound-button-ready {
-  background: #0d8f3f;
-}
-
-.monitor-title {
-  text-align: center;
-  font-size: 36px;
-  margin-bottom: 20px;
-  color: #111;
+.monitor-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .empty-text {
   text-align: center;
-  font-size: 20px;
-  color: #444;
+  margin-top: 60px;
+  color: #6b7280;
+  font-size: 18px;
 }
 
 .order-card {
-  border: 1px solid #ddd;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 14px;
-  background: #fff8f0;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  background: #fffaf3;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
-.order-name {
-  font-size: 22px;
-  font-weight: 800;
-  margin-bottom: 10px;
+.order-card h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.order-card p {
+  margin: 6px 0;
+  font-size: 16px;
 }
 
 .order-items {
-  margin-top: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 16px;
 }
 
-.fullscreen-alarm {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: rgba(120, 0, 0, 0.92);
-  backdrop-filter: blur(2px);
+.order-items strong {
+  display: block;
+  margin-bottom: 6px;
 }
 
-.fullscreen-alarm-content {
-  width: min(92vw, 720px);
-  text-align: center;
-  color: white;
-  border: 4px solid white;
-  border-radius: 24px;
-  padding: 32px 24px;
-  box-shadow: 0 0 40px rgba(255, 0, 0, 0.75);
-  background: rgba(255, 30, 30, 0.9);
-  transition: color 0.2s;
+.order-items div {
+  margin: 4px 0;
 }
 
-.fullscreen-alarm-icon {
-  font-size: 72px;
-  margin-bottom: 12px;
+.new-order-card {
+  border: 5px solid #ff1f1f;
+  animation: shopAlarm 0.55s infinite;
+  box-shadow: 0 0 35px rgba(255, 0, 0, 0.55);
 }
 
-.fullscreen-alarm-title {
-  font-size: 44px;
+.new-order-card h2::after {
+  content: "  🚨 ออเดอร์ใหม่";
+  color: #d60000;
+  font-size: 17px;
   font-weight: 900;
-  margin-bottom: 12px;
-  letter-spacing: 0.5px;
 }
 
-.fullscreen-alarm-subtitle {
-  font-size: 22px;
-  margin-bottom: 24px;
-  line-height: 1.45;
-}
-
-.fullscreen-accept-button {
-  font-size: 24px;
-  padding: 18px 28px;
-  min-width: 260px;
-}
-
-.accept-button {
-  background: #11a84f;
-  color: white;
-  border: none;
-  padding: 16px 26px;
-  font-size: 22px;
-  font-weight: 800;
-  border-radius: 14px;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-}
-
-@keyframes blinkAlert {
+@keyframes shopAlarm {
   0% {
-    background: #ff3b30; /* แดง */
-    transform: scale(1);
-    box-shadow: 0 0 20px rgba(255, 59, 48, 0.7);
-  }
-
-  25% {
-    background: #ffcc00; /* เหลือง */
-    transform: scale(1.05);
-    box-shadow: 0 0 60px rgba(255, 204, 0, 1);
-  }
-
-  50% {
-    background: #b80000; /* แดงเข้ม */
-    transform: scale(1);
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
-  }
-
-  75% {
-    background: #ffd700; /* เหลืองทอง */
-    transform: scale(1.05);
-    box-shadow: 0 0 70px rgba(255, 215, 0, 1);
-  }
-
-  100% {
-    background: #ff3b30; /* กลับแดง */
-    transform: scale(1);
-    box-shadow: 0 0 20px rgba(255, 59, 48, 0.7);
-  }
-}
-
-.alert-blink {
-  animation: blinkAlert 0.5s infinite;
-  color: black;
-}
-
-.alarm-blink {
-  border: 4px solid red;
-  animation: redYellowBlink 0.6s infinite;
-}
-
-@keyframes redYellowBlink {
-  0% {
-    background: #ff1f1f;
-    color: white;
+    background: #fff4e6;
     transform: scale(1);
   }
 
   50% {
     background: #ffe600;
-    color: #111;
-    transform: scale(1.02);
+    transform: scale(1.025);
   }
 
   100% {
-    background: #ff1f1f;
-    color: white;
+    background: #fff4e6;
     transform: scale(1);
   }
 }
 
-.alarm-blink {
-  border: 4px solid red;
-  animation: blink 0.6s infinite;
-}
-
-@keyframes blink {
-  0% { background: #ff1f1f; color: white; }
-  50% { background: yellow; color: black; }
-  100% { background: #ff1f1f; color: white; }
-}
-
-.fullscreen-alarm {
-  position: sticky;
-  top: 0;
-  z-index: 999;
-  padding: 20px;
-  text-align: center;
-  font-size: 22px;
-  font-weight: bold;
-  animation: blink 0.6s infinite;
-}
-
 .accept-button {
-  margin-top: 10px;
-  padding: 10px;
-  background: green;
+  margin-top: 16px;
+  width: 100%;
+  padding: 15px;
+  background: #087f5b;
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 16px;
+  font-size: 19px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.accept-button:active,
+.sound-button:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 600px) {
+  .monitor-page {
+    padding: 14px;
+  }
+
+  .monitor-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .monitor-header h1 {
+    font-size: 24px;
+  }
+
+  .sound-button {
+    width: 100%;
+  }
+
+  .order-card h2 {
+    font-size: 21px;
+  }
 }

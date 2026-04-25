@@ -136,10 +136,7 @@ function App() {
           </div>
         </div>
 
-        <nav className="nav-links">
-          <a href="#home">หน้าแรก</a>
-          <a href="#menu">เมนูกาแฟ</a>
-        </nav>
+        
 
         <div className="cart-badge">
           <span>🛒</span>
@@ -255,11 +252,7 @@ function App() {
           </div>
         </section>
 
-        <section className="features">
-          <div>🌿 สดใหม่ทุกแก้ว</div>
-          <div>❤️ รสชาติดี กลมกล่อม</div>
-          <div>🏪 รับที่ร้าน สะดวก รวดเร็ว</div>
-        </section>
+       
       </main>
     </div>
   );

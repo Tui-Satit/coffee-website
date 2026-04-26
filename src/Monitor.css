@@ -59,11 +59,9 @@
 }
 
 .order-card {
-  background: #fffaf3;
-  border: 1px solid #e7dbc8;
   border-radius: 18px;
   padding: 18px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
 }
 
 .order-card-header {
@@ -139,30 +137,33 @@
   color: #7c2d12;
 }
 
-.new-order-card {
-  border: 1px solid #f5b9b4;
-  background: linear-gradient(180deg, #fffef9 0%, #fff8ed 100%);
+.order-card-new {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 2px solid #ff6b6b;
   box-shadow:
-    0 14px 30px rgba(126, 67, 33, 0.12),
-    0 0 0 1px rgba(239, 68, 68, 0.08),
-    0 0 22px rgba(239, 68, 68, 0.18);
-  animation: premiumAlarmPulse 2.2s ease-in-out infinite;
+    0 18px 45px rgba(239, 68, 68, 0.22),
+    0 0 0 1px rgba(255, 107, 107, 0.25);
+  animation: newOrderPulse 1.8s ease-in-out infinite;
 }
 
-@keyframes premiumAlarmPulse {
+.order-card-accepted {
+  background: linear-gradient(135deg, #fffdf8 0%, #f8f1e7 100%);
+  border: 1px solid rgba(120, 90, 60, 0.18);
+  box-shadow: 0 10px 30px rgba(80, 60, 40, 0.08);
+}
+
+@keyframes newOrderPulse {
   0%,
   100% {
     box-shadow:
-      0 14px 30px rgba(126, 67, 33, 0.12),
-      0 0 0 1px rgba(239, 68, 68, 0.08),
-      0 0 16px rgba(239, 68, 68, 0.14);
+      0 18px 45px rgba(239, 68, 68, 0.18),
+      0 0 0 1px rgba(255, 107, 107, 0.2);
   }
 
   50% {
     box-shadow:
-      0 16px 34px rgba(126, 67, 33, 0.16),
-      0 0 0 1px rgba(239, 68, 68, 0.14),
-      0 0 28px rgba(239, 68, 68, 0.22);
+      0 22px 60px rgba(239, 68, 68, 0.3),
+      0 0 0 1px rgba(255, 107, 107, 0.28);
   }
 }
 
@@ -224,6 +225,16 @@
 
   .customer-name {
     font-size: 21px;
+  }
+
+  .order-card-new {
+    box-shadow:
+      0 14px 30px rgba(239, 68, 68, 0.2),
+      0 0 0 1px rgba(255, 107, 107, 0.22);
+  }
+
+  .order-card-accepted {
+    box-shadow: 0 8px 20px rgba(80, 60, 40, 0.08);
   }
 
   .order-meta p,

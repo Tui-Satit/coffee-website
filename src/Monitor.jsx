@@ -169,7 +169,7 @@ function Monitor() {
                 o.status === "new" ? "new-order-card" : ""
               }`}
             >
-              <h2>👤 New {o.customerName || "ไม่ระบุชื่อ"}</h2>
+              <h2>👤 {o.customerName || "ไม่ระบุชื่อ"}</h2>
 
               <p>⏰ เวลา: {formatOrderTime(o.createdAt)}</p>
               <p>📝 หมายเหตุ: {o.note || "-"}</p>

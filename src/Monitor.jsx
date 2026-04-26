@@ -14,7 +14,7 @@ function Monitor() {
     audioRef.current = new Audio("/alert.mp3");
     audioRef.current.loop = true;
     audioRef.current.volume = 1;
-  }, [])
+  }, []);
 
   useEffect(() => {
     const ordersRef = ref(db, "orders");
@@ -111,7 +111,6 @@ function Monitor() {
     return price * qty;
   };
 
-
   const formatOrderTime = (createdAt) => {
     if (createdAt == null) {
       return "-";
@@ -150,12 +149,12 @@ function Monitor() {
           <p>ดูออเดอร์ใหม่แบบ Real-time</p>
         </div>
 
-       <button
-  className={`sound-button ${soundEnabled ? "active" : ""}`}
-  onClick={enableSound}
->
-  {soundEnabled ? "✅ เปิดแจ้งเตือนแล้ว" : "🔊 เปิดเสียงแจ้งเตือน"}
-</button>
+        <button
+          className={`sound-button ${soundEnabled ? "active" : ""}`}
+          onClick={enableSound}
+        >
+          {soundEnabled ? "✅ เปิดแจ้งเตือนแล้ว" : "🔊 เปิดเสียงแจ้งเตือน"}
+        </button>
       </header>
 
       <main className="monitor-content">
@@ -165,34 +164,36 @@ function Monitor() {
           orders.map((o) => (
             <div
               key={o.id}
-              className={`order-card ${
-                o.status === "new" ? "new-order-card" : ""
-              }`}
+              className={`order-card ${o.status === "new" ? "new-order-card" : ""}`}
             >
-              <h2>👤 {o.customerName || "ไม่ระบุชื่อ"}</h2>
+              <div className="order-card-header">
+                <h2 className="customer-name">👤 {o.customerName || "ไม่ระบุชื่อ"}</h2>
+                {o.status === "new" && <span className="new-order-badge">ออเดอร์ใหม่</span>}
+              </div>
 
-              <p>⏰ เวลา: {formatOrderTime(o.createdAt)}</p>
-              <p>📝 หมายเหตุ: {o.note || "-"}</p>
-              <p>💵 ราคารวม: {getTotal(o)} บาท</p>
-              <p>📦 สถานะ: {o.status || "-"}</p>
+              <div className="order-meta">
+                <p>⏰ เวลา: {formatOrderTime(o.createdAt)}</p>
+                <p>📝 หมายเหตุ: {o.note || "-"}</p>
+                <p>💵 ราคารวม: {getTotal(o)} บาท</p>
+                <p>📦 สถานะ: {o.status || "-"}</p>
+              </div>
 
               {o.items && o.items.length > 0 && (
                 <div className="order-items">
-                  <strong>☕ รายการ:</strong>
+                  <strong>☕ รายการ</strong>
 
                   {o.items.map((item, index) => (
-                    <div key={index}>
-                      - {item.name} x {item.qty || 1} = {getItemTotal(item)} บาท
+                    <div key={index} className="order-item-row">
+                      <span className="item-name">{item.name}</span>
+                      <span className="item-qty">x {item.qty || 1}</span>
+                      <span className="item-price">{getItemTotal(item)} บาท</span>
                     </div>
                   ))}
                 </div>
               )}
 
               {o.status === "new" && (
-                <button
-                  className="accept-button"
-                  onClick={() => acceptOrder(o.id)}
-                >
+                <button className="accept-button" onClick={() => acceptOrder(o.id)}>
                   ✅ รับออเดอร์แล้ว
                 </button>
               )}

@@ -111,14 +111,32 @@ function App() {
       createdAt: serverTimestamp(),
     };
 
+    const orderTime = new Date().toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const divider = "━━━━━━━━━━━━━━";
     const orderLines = [
       "☕ ออเดอร์ใหม่จากเว็บไซต์",
-      `👤 ชื่อลูกค้า: ${trimmedCustomerName}`,
+      "",
+      divider,
+      `👤 ลูกค้า: ${trimmedCustomerName}`,
       `📍 รับสินค้า: ${orderType}`,
-      "📦 รายการ:",
-      ...cart.map((item) => `- ${item.name} x ${item.qty} = ${item.price * item.qty} บาท`),
-      `💵 ราคารวม: ${total} บาท`,
+      `⏰ เวลา: ${orderTime} น.`,
+      divider,
+      "",
+      "📦 รายการออเดอร์",
+      ...cart.map(
+        (item) =>
+          `• ${item.name} × ${item.qty} — ${item.price * item.qty} บาท`
+      ),
+      "",
+      divider,
+      `💰 รวมทั้งหมด: ${total} บาท`,
       `📝 หมายเหตุ: ${trimmedNote || "-"}`,
+      "",
+      "✅ กรุณาตรวจสอบที่หน้า Monitor",
     ];
 
     const encodedOrderMessage = encodeURIComponent(orderLines.join("\n"));

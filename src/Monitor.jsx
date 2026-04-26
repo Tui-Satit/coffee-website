@@ -199,7 +199,10 @@ function Monitor() {
               )}
 
               {o.status === "new" && (
-                <button className="accept-button" onClick={() => acceptOrder(o.id)}>
+                <button
+                  className={`accept-button ${o.status === "new" ? "is-new" : ""}`}
+                  onClick={() => acceptOrder(o.id)}
+                >
                   ✅ รับออเดอร์แล้ว
                 </button>
               )}

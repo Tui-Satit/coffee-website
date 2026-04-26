@@ -50,7 +50,7 @@ function Monitor() {
           }
 
           setTimeout(() => {
-            const firstNewOrder = document.querySelector(".new-order-card");
+            const firstNewOrder = document.querySelector(".order-card-new");
             firstNewOrder?.scrollIntoView({
               behavior: "smooth",
               block: "center",
@@ -164,7 +164,13 @@ function Monitor() {
           orders.map((o) => (
             <div
               key={o.id}
-              className={`order-card ${o.status === "new" ? "new-order-card" : ""}`}
+              className={`order-card ${
+                o.status === "new"
+                  ? "order-card-new"
+                  : o.status === "accepted"
+                  ? "order-card-accepted"
+                  : ""
+              }`}
             >
               <div className="order-card-header">
                 <h2 className="customer-name">👤 {o.customerName || "ไม่ระบุชื่อ"}</h2>

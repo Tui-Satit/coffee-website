@@ -1,260 +1,202 @@
 import "./App.css";
 import { useMemo, useState } from "react";
-import { ref, push, get, query, orderByChild, equalTo } from "firebase/database";
+import { ref, push, runTransaction, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
+
+const LINE_OA_URL = "https://line.me/R/ti/p/@575kncik";
 
 const menuItems = [
   {
-    id: 1,
+    id: "americano",
     name: "Americano",
     price: 55,
     image: "/images/americano.jpg",
   },
   {
-    id: 2,
+    id: "latte",
     name: "Latte",
     price: 65,
     image: "/images/latte.jpg",
   },
   {
-    id: 3,
+    id: "cappuccino",
     name: "Cappuccino",
     price: 65,
     image: "/images/cappuccino.jpg",
   },
   {
-    id: 4,
+    id: "mocha",
     name: "Mocha",
     price: 70,
     image: "/images/mocha.jpg",
   },
 ];
 
-const sugarOptions = [
-  { value: "normal", label: "Normal", thai: "ปกติ" },
-  { value: "lessSweet", label: "Less sweet", thai: "หวานน้อย" },
-  { value: "noSugar", label: "No sugar", thai: "ไม่หวาน" },
-];
-
-const LINE_OA_URL = "https://line.me/R/ti/p/@575kncik";
-
-const getTodayDate = () => {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-const createOrderNumber = (queueNumber) => {
-  return `#${String(queueNumber).padStart(3, "0")}`;
-};
-
-const getNextQueueNumber = async () => {
-  const today = getTodayDate();
-
-  const ordersRef = ref(db, "orders");
-  const todayQuery = query(
-    ordersRef,
-    orderByChild("orderDate"),
-    equalTo(today)
-  );
-
-  const snapshot = await get(todayQuery);
-  let maxQueue = 0;
-
-  if (snapshot.exists()) {
-    snapshot.forEach((child) => {
-      const order = child.val();
-      const queueNumber = Number(order.queueNumber || 0);
-
-      if (queueNumber > maxQueue) {
-        maxQueue = queueNumber;
-      }
-    });
-  }
-
-  return maxQueue + 1;
-};
-
-const getSweetnessThai = (value) => {
-  return sugarOptions.find((option) => option.value === value)?.thai || "ปกติ";
-};
+const sweetOptions = ["Normal", "Sweetless", "No sugar"];
 
 function App() {
   const [customerName, setCustomerName] = useState("");
-  const [selectedSugar, setSelectedSugar] = useState("normal");
+  const [selectedSweet, setSelectedSweet] = useState("Normal");
   const [cart, setCart] = useState([]);
   const [note, setNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [successOrderNumber, setSuccessOrderNumber] = useState("");
 
   const totalPrice = useMemo(() => {
-    return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   }, [cart]);
 
-  const addToCart = (menuItem) => {
-    const cartKey = `${menuItem.id}-${selectedSugar}`;
+  const addToCart = (menu) => {
+    setSuccessOrderNumber("");
+    setErrorMessage("");
 
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.cartKey === cartKey);
+      const foundItem = prevCart.find(
+        (item) => item.id === menu.id && item.sweet === selectedSweet
+      );
 
-      if (existingItem) {
+      if (foundItem) {
         return prevCart.map((item) =>
-          item.cartKey === cartKey ? { ...item, qty: item.qty + 1 } : item
+          item.id === menu.id && item.sweet === selectedSweet
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
 
       return [
         ...prevCart,
         {
-          cartKey,
-          id: menuItem.id,
-          name: menuItem.name,
-          price: menuItem.price,
-          qty: 1,
-          sweetness: selectedSugar,
-          sweetnessLabel: getSweetnessThai(selectedSugar),
+          id: menu.id,
+          name: menu.name,
+          price: menu.price,
+          image: menu.image,
+          sweet: selectedSweet,
+          quantity: 1,
         },
       ];
     });
   };
 
-  const increaseQty = (cartKey) => {
+  const decreaseItem = (cartItem) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((item) =>
+          item.id === cartItem.id && item.sweet === cartItem.sweet
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const increaseItem = (cartItem) => {
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.cartKey === cartKey ? { ...item, qty: item.qty + 1 } : item
+        item.id === cartItem.id && item.sweet === cartItem.sweet
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
       )
     );
   };
 
-  const decreaseQty = (cartKey) => {
-    setCart((prevCart) =>
-      prevCart
-        .map((item) =>
-          item.cartKey === cartKey ? { ...item, qty: item.qty - 1 } : item
-        )
-        .filter((item) => item.qty > 0)
-    );
+  const getNextOrderNumber = async () => {
+    const counterRef = ref(db, "orderCounter/today");
+
+    const result = await runTransaction(counterRef, (currentValue) => {
+      return (currentValue || 0) + 1;
+    });
+
+    const nextNumber = result.snapshot.val();
+    return `#${String(nextNumber).padStart(3, "0")}`;
   };
 
-  const removeItem = (cartKey) => {
-    setCart((prevCart) => prevCart.filter((item) => item.cartKey !== cartKey));
-  };
+  const sendOrder = async () => {
+    setErrorMessage("");
+    setSuccessOrderNumber("");
 
-  const handleSubmitOrder = async () => {
-    const cleanName = customerName.trim();
-
-    if (!cleanName) {
-      alert("กรุณากรอกชื่อลูกค้าก่อนส่งออเดอร์");
+    if (!customerName.trim()) {
+      setErrorMessage("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
       return;
     }
 
     if (cart.length === 0) {
-      alert("กรุณาเลือกเมนูก่อนส่งออเดอร์");
+      setErrorMessage("กรุณาเลือกเมนูก่อนส่งออเดอร์");
       return;
     }
 
     try {
-      setIsSubmitting(true);
+      setIsSending(true);
 
-      const queueNumber = await getNextQueueNumber();
-      const orderNumber = createOrderNumber(queueNumber);
-      const orderDate = getTodayDate();
+      const orderNumber = await getNextOrderNumber();
 
-      const newOrder = {
+      const orderData = {
         orderNumber,
-        queueNumber,
-        orderDate,
-        customerName: cleanName,
-        items: cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          qty: item.qty,
-          sweetness: item.sweetness,
-          sweetnessLabel: item.sweetnessLabel,
-        })),
-        note: note.trim() || "-",
+        customerName: customerName.trim(),
+        items: cart,
         totalPrice,
+        note: note.trim() || "-",
         status: "new",
         createdAt: Date.now(),
-        time: new Date().toLocaleTimeString("th-TH", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        createdAtServer: serverTimestamp(),
       };
 
-      await push(ref(db, "orders"), newOrder);
+      await push(ref(db, "orders"), orderData);
 
-      setSuccessOrderNumber(orderNumber);
-      setCart([]);
-      setNote("");
-
-      setTimeout(() => {
-        window.location.href = LINE_OA_URL;
-      }, 500);
+      window.location.href = LINE_OA_URL;
     } catch (error) {
-      console.error("Submit order error:", error);
-      alert("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่");
+      console.error(error);
+      setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
     } finally {
-      setIsSubmitting(false);
+      setIsSending(false);
     }
   };
 
   return (
     <main className="app">
-      <section className="hero">
+      <section className="hero-card">
         <p className="brand">Tui Cafe</p>
         <h1>Fresh Coffee Order</h1>
         <p>เลือกกาแฟที่คุณชอบ แล้วส่งออเดอร์ให้ร้านได้ทันที</p>
       </section>
 
-      <section className="customer-panel">
-        <label className="field-label" htmlFor="customerName">
-          ชื่อลูกค้า
-        </label>
+      <section className="customer-card">
+        <label htmlFor="customerName">ชื่อลูกค้า</label>
         <input
           id="customerName"
-          className="text-input"
           type="text"
           placeholder="เช่น Tui"
           value={customerName}
           onChange={(event) => setCustomerName(event.target.value)}
         />
 
-        <div className="sugar-section">
-          <p className="field-label">ระดับความหวาน</p>
-          <div className="sugar-buttons">
-            {sugarOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`sugar-btn ${
-                  selectedSugar === option.value ? "active" : ""
-                }`}
-                onClick={() => setSelectedSugar(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+        <label>ระดับความหวาน</label>
+        <div className="sweet-row">
+          {sweetOptions.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={
+                selectedSweet === option ? "sweet-btn active" : "sweet-btn"
+              }
+              onClick={() => setSelectedSweet(option)}
+            >
+              {option}
+            </button>
+          ))}
         </div>
       </section>
 
       <section className="menu-grid">
-        {menuItems.map((item) => (
-          <article className="menu-card" key={item.id}>
-            <img src={item.image} alt={item.name} className="menu-image" />
-
-            <div className="menu-content">
-              <h2>{item.name}</h2>
-              <p>{item.price} ฿</p>
-              <button
-                type="button"
-                className="add-btn"
-                onClick={() => addToCart(item)}
-              >
+        {menuItems.map((menu) => (
+          <article className="coffee-card menu-card" key={menu.id}>
+            <img src={menu.image} alt={menu.name} className="menu-image" />
+            <div className="coffee-content">
+              <div>
+                <h2>{menu.name}</h2>
+                <p>{menu.price} ฿</p>
+              </div>
+              <button type="button" onClick={() => addToCart(menu)}>
                 เพิ่มเมนู
               </button>
             </div>
@@ -262,8 +204,8 @@ function App() {
         ))}
       </section>
 
-      <section className="order-panel">
-        <div className="order-header">
+      <section className="cart-card">
+        <div className="cart-header">
           <div>
             <p className="brand">Your Order</p>
             <h2>รายการออเดอร์</h2>
@@ -272,31 +214,25 @@ function App() {
         </div>
 
         {cart.length === 0 ? (
-          <div className="empty-cart">ยังไม่มีรายการ</div>
+          <p className="empty-cart">ยังไม่มีรายการ</p>
         ) : (
           <div className="cart-list">
             {cart.map((item) => (
-              <div className="cart-item" key={item.cartKey}>
+              <div className="cart-item" key={`${item.id}-${item.sweet}`}>
                 <div>
                   <h3>{item.name}</h3>
-                  <p>ความหวาน: {item.sweetnessLabel}</p>
-                  <p>{item.price} ฿</p>
+                  <p>
+                    {item.sweet} · {item.price} ฿
+                  </p>
                 </div>
 
-                <div className="cart-actions">
-                  <button type="button" onClick={() => decreaseQty(item.cartKey)}>
+                <div className="quantity-box">
+                  <button type="button" onClick={() => decreaseItem(item)}>
                     -
                   </button>
-                  <span>{item.qty}</span>
-                  <button type="button" onClick={() => increaseQty(item.cartKey)}>
+                  <span>{item.quantity}</span>
+                  <button type="button" onClick={() => increaseItem(item)}>
                     +
-                  </button>
-                  <button
-                    type="button"
-                    className="remove-btn"
-                    onClick={() => removeItem(item.cartKey)}
-                  >
-                    ลบ
                   </button>
                 </div>
               </div>
@@ -304,16 +240,15 @@ function App() {
           </div>
         )}
 
-        <label className="field-label" htmlFor="note">
-          หมายเหตุ
-        </label>
+        <label htmlFor="note">หมายเหตุ</label>
         <textarea
           id="note"
-          className="note-input"
           placeholder="เช่น ไม่ใส่น้ำแข็ง / แยกน้ำ"
           value={note}
           onChange={(event) => setNote(event.target.value)}
         />
+
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
 
         {successOrderNumber && (
           <div className="success-box">
@@ -324,11 +259,11 @@ function App() {
 
         <button
           type="button"
-          className="submit-btn"
-          onClick={handleSubmitOrder}
-          disabled={isSubmitting}
+          className="send-button"
+          onClick={sendOrder}
+          disabled={isSending}
         >
-          {isSubmitting ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ให้ร้าน"}
+          {isSending ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ให้ร้าน"}
         </button>
       </section>
     </main>

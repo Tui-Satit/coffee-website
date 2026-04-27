@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ref, push, runTransaction, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
-const lineOrderUrl = "https://line.me/ti/p/~satitme";
+const lineOrderUrl = "https://line.me/ti/p/@575kncik";
 const imageFallback =
   "data:image/svg+xml;charset=UTF-8," +
   encodeURIComponent(`

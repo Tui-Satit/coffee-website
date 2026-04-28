@@ -21,7 +21,7 @@ function App() {
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successOrderNumber, setSuccessOrderNumber] = useState("");
-
+  const [showToast, setShowToast] = useState(false);
   const totalQuantity = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.qty, 0);
   }, [cart]);
@@ -129,7 +129,12 @@ function App() {
       };
 
       await push(ref(db, "orders"), orderData);
-
+const orderTime = new Date().toLocaleString("th-TH", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
       const orderLines = cart
         .map(
           (item) =>
@@ -143,6 +148,7 @@ function App() {
 
 👤 ลูกค้า: ${customerName.trim()}
 🧾 ออเดอร์: ${orderNumber}
+⏰ เวลา: ${orderTime}
 
 📦 รายการออเดอร์
 ${orderLines}
@@ -158,7 +164,7 @@ ${orderLines}
       setCart([]);
       setNote("");
 
-      window.location.href = `https://line.me/R/oaMessage/@575kncik/?text=${encodedText}`;
+      window.location.href = `https://line.me/R/msg/text/?${encodedText}`;
     } catch (error) {
       console.error(error);
       setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
@@ -241,9 +247,19 @@ ${orderLines}
                 <p>{menu.price} ฿</p>
               </div>
 
-              <button type="button" onClick={() => addToCart(menu)}>
-                เพิ่มเมนู
-              </button>
+             <button
+  type="button"
+  onClick={() => {
+    addToCart(menu);
+    setShowToast(true);
+
+    setTimeout(() => {
+      setShowToast(false);
+    }, 1500);
+  }}
+>
+  เพิ่มเมนู
+</button>
             </div>
           </article>
         ))}
@@ -326,6 +342,12 @@ ${orderLines}
           {isSending ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ให้ร้าน"}
         </button>
       </section>
+
+      {showToast && (
+  <div className="toast">
+    🛒 เพิ่มลงตะกร้าแล้ว
+  </div>
+)}
     </main>
   );
 }

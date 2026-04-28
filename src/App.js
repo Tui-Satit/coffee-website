@@ -32,6 +32,10 @@ function App() {
     return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   }, [cart]);
 
+  const totalQuantity = useMemo(() => {
+  return cart.reduce((sum, item) => sum + item.qty, 0);
+}, [cart]);
+
   const addToCart = (coffee) => {
     const newItem = {
       ...coffee,
@@ -147,6 +151,14 @@ function App() {
 
   return (
     <main className="app">
+
+      <div className="cart-floating">
+  <span className="cart-emoji">🛒</span>
+
+  {totalQuantity > 0 && (
+    <span className="cart-count">{totalQuantity}</span>
+  )}
+</div>
       <div className="cart-icon">
         🛒
         {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}

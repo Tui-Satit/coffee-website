@@ -309,7 +309,7 @@ ${orderLines}
           </div>
         )}
 
-         <label htmlFor="customerName">ชื่อลูกค้า</label>
+         <label htmlFor="customerName">ชื่อลูกค้า</label><p className="name-warning">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>
         <input
           id="customerName"
           type="text"

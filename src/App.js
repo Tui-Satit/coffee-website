@@ -116,79 +116,55 @@ function App() {
   };
 
   const sendOrder = async () => {
-    setErrorMessage("");
-    setSuccessOrderNumber("");
+  setErrorMessage("");
+  setSuccessOrderNumber("");
 
-    if (!customerName.trim()) {
-      setErrorMessage("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
-      return;
-    }
+  if (!customerName.trim()) {
+    setErrorMessage("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+    return;
+  }
 
-    if (cart.length === 0) {
-      setErrorMessage("กรุณาเลือกเมนูก่อนส่งออเดอร์");
-      return;
-    }
+  if (cart.length === 0) {
+    setErrorMessage("กรุณาเลือกเมนูก่อนส่งออเดอร์");
+    return;
+  }
 
-    try {
-      setIsSending(true);
+  try {
+    setIsSending(true);
 
-      const orderNumber = await getNextOrderNumber();
+    const orderNumber = await getNextOrderNumber();
 
-      const orderData = {
-        orderNumber,
-        customerName: customerName.trim(),
-        items: cart,
-        totalQuantity,
-        totalPrice,
-        note: note.trim() || "-",
-        status: "new",
-        createdAt: Date.now(),
-        createdAtServer: serverTimestamp(),
-      };
+    const orderData = {
+      orderNumber,
+      customerName: customerName.trim(),
+      items: cart,
+      totalQuantity,
+      totalPrice,
+      note: note.trim() || "-",
+      status: "new",
+      createdAt: Date.now(),
+      createdAtServer: serverTimestamp(),
+    };
 
-      await push(ref(db, "orders"), orderData);
-// ✅ สร้างข้อความ LINE
-const orderMessage = `☕ ออเดอร์ใหม่จากเว็บไซต์
+    await push(ref(db, "orders"), orderData);
 
-👤 ลูกค้า: ${customerName}
-🧾 ออเดอร์: ${orderNumber}
+    const orderTime = new Date().toLocaleString("th-TH", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
-📦 รายการออเดอร์
-${cart
-  .map(
-    (item) =>
-      `• ${item.name} (${item.temperature}, ${item.sweet}) x ${item.qty} - ${
-        item.price * item.qty
-      } บาท`
-  )
-  .join("\n")}
+    const orderLines = cart
+      .map(
+        (item) =>
+          `• ${item.name} (${item.temperature}, ${item.sweetness}) x${item.qty} - ${
+            item.price * item.qty
+          } บาท`
+      )
+      .join("\n");
 
-💰 รวมทั้งหมด: ${totalPrice} บาท
-📝 หมายเหตุ: ${note || "-"}
-
-✅ กรุณาตรวจสอบที่หน้า Monitor`;
-
-// ✅ encode ข้อความ
-const lineMessage = encodeURIComponent(orderMessage);
-
-// ✅ เปิด LINE (ไม่มี text=)
-window.location.href = `https://line.me/R/msg/text/?${lineMessage}`;
-const orderTime = new Date().toLocaleString("th-TH", {
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-      const orderLines = cart
-        .map(
-          (item) =>
-            `• ${item.name} (${item.temperature}, ${item.sweetness}) x ${
-              item.qty
-            } - ${item.price * item.qty} บาท`
-        )
-        .join("\n");
-
-      const lineText = `☕ ออเดอร์ใหม่จากเว็บไซต์
+    const lineText = `☕ ออเดอร์ใหม่จากเว็บไซต์
 
 👤 ลูกค้า: ${customerName.trim()}
 🧾 ออเดอร์: ${orderNumber}
@@ -202,23 +178,24 @@ ${orderLines}
 
 ✅ กรุณาตรวจสอบที่หน้า Monitor`;
 
-     
-      setSuccessOrderNumber(orderNumber);
-      setCart([]);
-      setNote("");
+    setSuccessOrderNumber(orderNumber);
+    setCart([]);
+    setNote("");
 
-     await navigator.clipboard.writeText(lineText);
+    const lineMessage = encodeURIComponent(lineText);
+    const lineId = "@575kncik";
+    const lineUrl = `https://line.me/R/oaMessage/${lineId}/?${lineMessage}`;
 
-window.location.href = "https://line.me/ti/p/~satitme";
-    } catch (error) {
-      console.error(error);
-      setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  return (
+    window.location.href = lineUrl;
+  } catch (error) {
+    console.error(error);
+    setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+  } finally {
+    setIsSending(false);
+  }
+};
+  
+return (
     <main className="app">
       <div
         className="cart-floating"
@@ -294,22 +271,17 @@ window.location.href = "https://line.me/ti/p/~satitme";
 
   <button
   className="add-btn"
- onClick={() => {
-  addToCart(menu);
+  onClick={(e) => {
+    addToCart(menu);
 
-  // ✅ เพิ่มตรงนี้
-  setShowToast(true);
+    triggerFloating(e); // ✅ ใช้งานตรงนี้
 
-  setTimeout(() => {
-    setShowToast(false);
-  }, 1000);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 1000);
 
-  setAddedItemId(menu.id);
-
-  setTimeout(() => {
-    setAddedItemId(null);
-  }, 900);
-}}
+    setAddedItemId(menu.id);
+    setTimeout(() => setAddedItemId(null), 900);
+  }}
 >
   เพิ่มลงตะกร้า
 
@@ -421,11 +393,7 @@ window.location.href = "https://line.me/ti/p/~satitme";
     +1
   </span>
 ))}
-{showToast && (
-  <div className="toast">
-    🛒 เพิ่มลงตะกร้าแล้ว
-  </div>
-)}
+
     </main>
   );
 }

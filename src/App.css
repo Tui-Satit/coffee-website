@@ -383,12 +383,14 @@ textarea {
 }
 
 .name-warning {
-  background-color: #ffffff;   /* พื้นหลังขาว */
-  color: #ff3b30;              /* ตัวอักษรแดง */
+  background-color: #ff3b30;   /* พื้นหลังขาว */
+  color: #ffffff;              /* ตัวอักษรแดง */
   padding: 8px 12px;
   border-radius: 10px;
   margin-top: 6px;
   font-size: 14px;
   font-weight: 600;
   border: 1px solid #ff3b30;
+  width: 300px;
+  text-align: center;
 }

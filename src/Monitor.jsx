@@ -177,11 +177,7 @@ function Monitor() {
     return Number(order.total || order.totalPrice || 0);
   };
 
-  const getItemTotal = (item) => {
-    const price = Number(item.price || 0);
-    const qty = Number(item.qty || 1);
-    return price * qty;
-  };
+ 
 
   const formatOrderTime = (createdAt) => {
     const timestamp = getTimestamp(createdAt);
@@ -322,20 +318,25 @@ function Monitor() {
                     </div>
                   </div>
 
-                  {order.items && order.items.length > 0 && (
-                    <div className="order-item">
-  <div>
-    <strong>{item.name}</strong>
-    <p>
-      {item.temperature === "Hot" ? "☕ Hot" : "🧊 Iced"} · {item.sweetness || "Normal"}
-    </p>
-  </div>
+               {order.items && order.items.length > 0 && (
+  <div className="order-items">
+    {order.items.map((item, index) => (
+      <div className="order-item" key={`${item.id}-${index}`}>
+        <div>
+          <strong>{item.name}</strong>
+          <p>
+            {item.temperature === "Hot" ? "☕ Hot" : "🧊 Iced"} ·{" "}
+            {item.sweetness || "Normal"}
+          </p>
+        </div>
 
-  <span>
-    x {item.qty || 1} &nbsp; {item.price * (item.qty || 1)} ฿
-  </span>
-</div>
-                  )}
+        <span>
+          x {item.qty || 1} &nbsp; {item.price * (item.qty || 1)} ฿
+        </span>
+      </div>
+    ))}
+  </div>
+)}
 
                   {isActive ? (
                     <div className="order-actions">

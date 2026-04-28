@@ -323,17 +323,18 @@ function Monitor() {
                   </div>
 
                   {order.items && order.items.length > 0 && (
-                    <div className="order-items">
-                      <strong>รายการ</strong>
+                    <div className="order-item">
+  <div>
+    <strong>{item.name}</strong>
+    <p>
+      {item.temperature === "Hot" ? "☕ Hot" : "🧊 Iced"} · {item.sweetness || "Normal"}
+    </p>
+  </div>
 
-                      {order.items.map((item, index) => (
-                        <div key={index} className="order-item-row">
-                          <span className="item-name">{item.name}</span>
-                          <span className="item-qty">x {item.qty || 1}</span>
-                          <span className="item-price">{formatMoney(getItemTotal(item))} ฿</span>
-                        </div>
-                      ))}
-                    </div>
+  <span>
+    x {item.qty || 1} &nbsp; {item.price * (item.qty || 1)} ฿
+  </span>
+</div>
                   )}
 
                   {isActive ? (

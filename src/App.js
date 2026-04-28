@@ -120,6 +120,15 @@ function App() {
 
       const orderNumber = await getNextOrderNumber();
 
+      const orderLines = cart
+  .map(
+    (item) =>
+      `• ${item.name} (${item.temperature}, ${item.sweetness}) × ${item.qty} — ${
+        item.price * item.qty
+      } บาท`
+  )
+  .join("\n");
+
       const orderData = {
         orderNumber,
         customerName: customerName.trim(),

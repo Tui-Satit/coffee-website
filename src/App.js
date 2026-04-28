@@ -23,6 +23,7 @@ function App() {
   const [successOrderNumber, setSuccessOrderNumber] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [floatingItems, setFloatingItems] = useState([]);
+  const [addedItemId, setAddedItemId] = useState(null);
   const totalQuantity = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.qty, 0);
   }, [cart]);
@@ -175,13 +176,14 @@ ${orderLines}
 
 ✅ กรุณาตรวจสอบที่หน้า Monitor`;
 
-      const encodedText = encodeURIComponent(lineText);
-
+     
       setSuccessOrderNumber(orderNumber);
       setCart([]);
       setNote("");
 
-      window.location.href = `https://line.me/R/msg/text/?${encodedText}`;
+     await navigator.clipboard.writeText(lineText);
+
+window.location.href = "https://line.me/ti/p/~satitme";
     } catch (error) {
       console.error(error);
       setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
@@ -265,23 +267,33 @@ ${orderLines}
               </div>
 
   <button
-  type="button"
- onClick={(e) => {
+  className="add-btn"
+ onClick={() => {
   addToCart(menu);
 
-  // +1 ลอยขึ้น
-  triggerFloating(e);
-
-  // Toast
+  // ✅ เพิ่มตรงนี้
   setShowToast(true);
 
   setTimeout(() => {
     setShowToast(false);
-  }, 1500);
+  }, 1000);
+
+  setAddedItemId(menu.id);
+
+  setTimeout(() => {
+    setAddedItemId(null);
+  }, 900);
 }}
 >
-  เพิ่มเมนู
-</button>       
+  เพิ่มลงตะกร้า
+
+  {addedItemId === menu.id && (
+    <>
+      <span className="added-text">เพิ่มลงตะกร้าแล้ว</span>
+      <span className="plus-one">+1</span>
+    </>
+  )}
+</button>
             </div>
           </article>
         ))}
@@ -383,7 +395,11 @@ ${orderLines}
     +1
   </span>
 ))}
-
+{showToast && (
+  <div className="toast">
+    🛒 เพิ่มลงตะกร้าแล้ว
+  </div>
+)}
     </main>
   );
 }

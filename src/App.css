@@ -331,3 +331,17 @@ textarea {
     align-items: flex-start;
   }
 }
+
+.option-buttons button {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-weight: bold;
+}
+
+.option-buttons button.active {
+  background: linear-gradient(135deg, #18c37e, #0f8f5b);
+}

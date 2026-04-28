@@ -37,6 +37,7 @@ const sweetOptions = ["Normal", "Sweetless", "No sugar"];
 function App() {
   const [customerName, setCustomerName] = useState("");
   const [selectedSweet, setSelectedSweet] = useState("Normal");
+  const [temperature, setTemperature] = useState("Iced");
   const [cart, setCart] = useState([]);
   const [note, setNote] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -48,36 +49,41 @@ function App() {
   }, [cart]);
 
   const addToCart = (menu) => {
-    setSuccessOrderNumber("");
-    setErrorMessage("");
+  setSuccessOrderNumber("");
+  setErrorMessage("");
 
-    setCart((prevCart) => {
-      const foundItem = prevCart.find(
-        (item) => item.id === menu.id && item.sweet === selectedSweet
+  setCart((prevCart) => {
+    const foundItem = prevCart.find(
+      (item) =>
+        item.id === menu.id &&
+        item.sweet === selectedSweet &&
+        item.temperature === temperature
+    );
+
+    if (foundItem) {
+      return prevCart.map((item) =>
+        item.id === menu.id &&
+        item.sweet === selectedSweet &&
+        item.temperature === temperature
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
       );
+    }
 
-      if (foundItem) {
-        return prevCart.map((item) =>
-          item.id === menu.id && item.sweet === selectedSweet
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-
-      return [
-        ...prevCart,
-        {
-          id: menu.id,
-          name: menu.name,
-          price: menu.price,
-          image: menu.image,
-          sweet: selectedSweet,
-          quantity: 1,
-        },
-      ];
-    });
-  };
-
+    return [
+      ...prevCart,
+      {
+        id: menu.id,
+        name: menu.name,
+        price: menu.price,
+        image: menu.image,
+        sweet: selectedSweet,
+        temperature: temperature,
+        quantity: 1,
+      },
+    ];
+  });
+};
   const decreaseItem = (cartItem) => {
     setCart((prevCart) =>
       prevCart
@@ -185,6 +191,26 @@ function App() {
             </button>
           ))}
         </div>
+
+        <div className="option-group">
+  <p className="option-title">ประเภทเครื่องดื่ม</p>
+
+ <div className="option-buttons">
+  <button
+    className={temperature === "Iced" ? "active" : ""}
+    onClick={() => setTemperature("Iced")}
+  >
+    Iced 🧊
+  </button>
+
+  <button
+    className={temperature === "Hot" ? "active" : ""}
+    onClick={() => setTemperature("Hot")}
+  >
+    Hot ☕
+  </button>
+</div>
+</div>
       </section>
 
       <section className="menu-grid">
@@ -222,7 +248,9 @@ function App() {
                 <div>
                   <h3>{item.name}</h3>
                   <p>
-                    {item.sweet} · {item.price} ฿
+                    <p>
+                       {item.temperature === "Hot" ? "☕ Hot" : "🧊 Iced"} · {item.sweet} · {item.price} ฿
+</p>
                   </p>
                 </div>
 

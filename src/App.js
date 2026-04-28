@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { ref, push, runTransaction, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
-const LINE_OA_URL = "https://line.me/R/ti/p/@575kncik";
+
 
 const menuItems = [
   { id: "americano", name: "Americano", price: 55, image: "/images/americano.jpg" },
@@ -139,8 +139,18 @@ function App() {
       setSuccessOrderNumber(orderNumber);
       setCart([]);
       setNote("");
+      
+      const orderLines = cart
+  .map(
+    (item) =>
+      `• ${item.name} (${item.temperature}, ${item.sweetness}) x ${item.qty} - ${
+        item.price * item.qty
+      }฿`
+  )
+  .join("%0A");
 
-      window.location.href = LINE_OA_URL;
+const message = `☕ ออเดอร์ใหม่จากเว็บไซต์%0A%0A👤 ลูกค้า: ${customerName}%0A%0A📦 รายการ%0A${orderLines}%0A%0A💰 รวม: ${totalPrice} บาท`;
+     window.location.href = `https://line.me/R/oaMessage/@575kncik?text=${message}`;
     } catch (error) {
       console.error(error);
       setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");

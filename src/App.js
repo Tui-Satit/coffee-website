@@ -22,6 +22,7 @@ function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successOrderNumber, setSuccessOrderNumber] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [floatingItems, setFloatingItems] = useState([]);
   const totalQuantity = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.qty, 0);
   }, [cart]);
@@ -29,6 +30,22 @@ function App() {
   const totalPrice = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   }, [cart]);
+
+  const triggerFloating = (e) => {
+  const rect = e.currentTarget.getBoundingClientRect(); 
+
+  const newItem = {
+    id: Date.now(),
+    x: rect.left + rect.width / 2,
+    y: rect.top,
+  };
+
+  setFloatingItems((prev) => [...prev, newItem]);
+
+  setTimeout(() => {
+    setFloatingItems((prev) => prev.filter((item) => item.id !== newItem.id));
+  }, 1000);
+};
 
   const addToCart = (coffee) => {
     const newItem = {
@@ -247,19 +264,24 @@ ${orderLines}
                 <p>{menu.price} ฿</p>
               </div>
 
-             <button
+  <button
   type="button"
-  onClick={() => {
-    addToCart(menu);
-    setShowToast(true);
+ onClick={(e) => {
+  addToCart(menu);
 
-    setTimeout(() => {
-      setShowToast(false);
-    }, 1500);
-  }}
+  // +1 ลอยขึ้น
+  triggerFloating(e);
+
+  // Toast
+  setShowToast(true);
+
+  setTimeout(() => {
+    setShowToast(false);
+  }, 1500);
+}}
 >
   เพิ่มเมนู
-</button>
+</button>       
             </div>
           </article>
         ))}
@@ -348,6 +370,20 @@ ${orderLines}
     🛒 เพิ่มลงตะกร้าแล้ว
   </div>
 )}
+
+{floatingItems.map((item) => (
+  <span
+    key={item.id}
+    className="floating-plus"
+    style={{
+      left: item.x,
+      top: item.y,
+    }}
+  >
+    +1
+  </span>
+))}
+
     </main>
   );
 }

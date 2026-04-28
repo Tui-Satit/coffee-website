@@ -171,14 +171,7 @@ function App() {
       </section>
 
       <section className="customer-card">
-        <label htmlFor="customerName">ชื่อลูกค้า</label>
-        <input
-          id="customerName"
-          type="text"
-          placeholder="เช่น Tui"
-          value={customerName}
-          onChange={(event) => setCustomerName(event.target.value)}
-        />
+       
 
         <label>ระดับความหวาน</label>
         <div className="sweet-row">
@@ -295,6 +288,15 @@ function App() {
             <strong>Order {successOrderNumber}</strong>
           </div>
         )}
+
+         <label htmlFor="customerName">ชื่อลูกค้า</label>
+        <input
+          id="customerName"
+          type="text"
+          placeholder="เช่น Tui"
+          value={customerName}
+          onChange={(event) => setCustomerName(event.target.value)}
+        />
 
         <button
           type="button"

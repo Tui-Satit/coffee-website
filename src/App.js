@@ -3,8 +3,6 @@ import { useMemo, useState } from "react";
 import { ref, push, runTransaction, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
-
-
 const menuItems = [
   { id: "americano", name: "Americano", price: 55, image: "/images/americano.jpg" },
   { id: "latte", name: "Latte", price: 65, image: "/images/latte.jpg" },
@@ -31,8 +29,6 @@ function App() {
   const totalPrice = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   }, [cart]);
-
- 
 
   const addToCart = (coffee) => {
     const newItem = {
@@ -120,8 +116,6 @@ function App() {
 
       const orderNumber = await getNextOrderNumber();
 
-      
-
       const orderData = {
         orderNumber,
         customerName: customerName.trim(),
@@ -136,21 +130,35 @@ function App() {
 
       await push(ref(db, "orders"), orderData);
 
+      const orderLines = cart
+        .map(
+          (item) =>
+            `• ${item.name} (${item.temperature}, ${item.sweetness}) x ${
+              item.qty
+            } - ${item.price * item.qty} บาท`
+        )
+        .join("\n");
+
+      const lineText = `☕ ออเดอร์ใหม่จากเว็บไซต์
+
+👤 ลูกค้า: ${customerName.trim()}
+🧾 ออเดอร์: ${orderNumber}
+
+📦 รายการออเดอร์
+${orderLines}
+
+💰 รวมทั้งหมด: ${totalPrice} บาท
+📝 หมายเหตุ: ${note.trim() || "-"}
+
+✅ กรุณาตรวจสอบที่หน้า Monitor`;
+
+      const encodedText = encodeURIComponent(lineText);
+
       setSuccessOrderNumber(orderNumber);
       setCart([]);
       setNote("");
-      
-      const orderLines = cart
-  .map(
-    (item) =>
-      `• ${item.name} (${item.temperature}, ${item.sweetness}) x ${item.qty} - ${
-        item.price * item.qty
-      }฿`
-  )
-  .join("%0A");
 
-const message = `☕ ออเดอร์ใหม่จากเว็บไซต์%0A%0A👤 ลูกค้า: ${customerName}%0A%0A📦 รายการ%0A${orderLines}%0A%0A💰 รวม: ${totalPrice} บาท`;
-     window.location.href = `https://line.me/R/oaMessage/@575kncik?text=${message}`;
+      window.location.href = `https://line.me/R/oaMessage/@575kncik/?text=${encodedText}`;
     } catch (error) {
       console.error(error);
       setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
@@ -161,22 +169,20 @@ const message = `☕ ออเดอร์ใหม่จากเว็บไ�
 
   return (
     <main className="app">
+      <div
+        className="cart-floating"
+        onClick={() => {
+          document.querySelector(".cart-card")?.scrollIntoView({
+            behavior: "smooth",
+          });
+        }}
+      >
+        <span className="cart-emoji">🛒</span>
 
-     <div
-  className="cart-floating"
-  onClick={() => {
-    document.querySelector(".cart-card").scrollIntoView({
-      behavior: "smooth",
-    });
-  }}
->
-  <span className="cart-emoji">🛒</span>
-
-  {totalQuantity > 0 && (
-    <span className="cart-count">{totalQuantity}</span>
-  )}
-</div>
-      
+        {totalQuantity > 0 && (
+          <span className="cart-count">{totalQuantity}</span>
+        )}
+      </div>
 
       <section className="hero-card">
         <p className="brand">Tui Cafe</p>
@@ -311,7 +317,6 @@ const message = `☕ ออเดอร์ใหม่จากเว็บไ�
           value={customerName}
           onChange={(event) => setCustomerName(event.target.value)}
         />
-
         <button
           type="button"
           className="send-button"

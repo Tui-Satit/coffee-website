@@ -147,6 +147,32 @@ function App() {
       };
 
       await push(ref(db, "orders"), orderData);
+// ✅ สร้างข้อความ LINE
+const orderMessage = `☕ ออเดอร์ใหม่จากเว็บไซต์
+
+👤 ลูกค้า: ${customerName}
+🧾 ออเดอร์: ${orderNumber}
+
+📦 รายการออเดอร์
+${cart
+  .map(
+    (item) =>
+      `• ${item.name} (${item.temperature}, ${item.sweet}) x ${item.qty} - ${
+        item.price * item.qty
+      } บาท`
+  )
+  .join("\n")}
+
+💰 รวมทั้งหมด: ${totalPrice} บาท
+📝 หมายเหตุ: ${note || "-"}
+
+✅ กรุณาตรวจสอบที่หน้า Monitor`;
+
+// ✅ encode ข้อความ
+const lineMessage = encodeURIComponent(orderMessage);
+
+// ✅ เปิด LINE (ไม่มี text=)
+window.location.href = `https://line.me/R/msg/text/?${lineMessage}`;
 const orderTime = new Date().toLocaleString("th-TH", {
   day: "numeric",
   month: "short",

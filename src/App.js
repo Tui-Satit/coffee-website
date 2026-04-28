@@ -150,17 +150,21 @@ function App() {
   return (
     <main className="app">
 
-      <div className="cart-floating">
+     <div
+  className="cart-floating"
+  onClick={() => {
+    document.querySelector(".cart-card").scrollIntoView({
+      behavior: "smooth",
+    });
+  }}
+>
   <span className="cart-emoji">🛒</span>
 
   {totalQuantity > 0 && (
     <span className="cart-count">{totalQuantity}</span>
   )}
 </div>
-      <div className="cart-icon">
-        🛒
-        {totalQuantity > 0 && <span className="cart-badge">{totalQuantity}</span>}
-      </div>
+      
 
       <section className="hero-card">
         <p className="brand">Tui Cafe</p>

@@ -364,7 +364,7 @@ textarea {
 }
 
 .cart-emoji {
-  font-size: 25px;
+  font-size: 40px;
 }
 
 .cart-count {
@@ -377,7 +377,7 @@ textarea {
   border-radius: 999px;
   background: #ff3b30;
   color: white;
-  font-size: 13px;
+  font-size: 30px;
   font-weight: 800;
   display: flex;
   align-items: center;

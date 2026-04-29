@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { ref, push, runTransaction, serverTimestamp } from "firebase/database";
 import { db } from "./firebase";
 
+const LINE_OA_ID = "@575kncik";
+
 const menuItems = [
   { id: "americano", name: "Americano", price: 55, image: "/images/americano.jpg" },
   { id: "latte", name: "Latte", price: 65, image: "/images/latte.jpg" },
@@ -10,262 +12,349 @@ const menuItems = [
   { id: "mocha", name: "Mocha", price: 70, image: "/images/mocha.jpg" },
 ];
 
+const temperatureOptions = ["เย็น", "ร้อน"];
+const sweetOptions = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
+
+function formatOrderNumber(number) {
+  return `#${String(number).padStart(3, "0")}`;
+}
+
 function App() {
   const [customerName, setCustomerName] = useState("");
-  const [cart, setCart] = useState([]);
-  const [menuOptions, setMenuOptions] = useState({});
   const [note, setNote] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successOrderNumber, setSuccessOrderNumber] = useState("");
-  const [showToast, setShowToast] = useState(false);
+  const [cart, setCart] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState(
+    menuItems.reduce((acc, item) => {
+      acc[item.id] = {
+        temperature: "เย็น",
+        sweet: "ปกติ",
+      };
+      return acc;
+    }, {})
+  );
+  const [nameError, setNameError] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  const getMenuOption = (id) => {
-    return menuOptions[id] || {
-      temperature: "เย็น",
-      sweetness: "ปกติ",
-    };
-  };
+  const totalItems = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cart]);
 
-  const updateMenuOption = (id, key, value) => {
-    setMenuOptions((prev) => ({
+  const totalPrice = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cart]);
+
+  const updateOption = (menuId, key, value) => {
+    setSelectedOptions((prev) => ({
       ...prev,
-      [id]: {
-        ...getMenuOption(id),
+      [menuId]: {
+        ...prev[menuId],
         [key]: value,
       },
     }));
   };
 
-  const addToCart = (item) => {
-    const option = getMenuOption(item.id);
+  const addToCart = (menu) => {
+    const option = selectedOptions[menu.id];
 
-    setCart((prev) => [
-      ...prev,
-      {
-        ...item,
-        temperature: option.temperature,
-        sweetness: option.sweetness,
-        cartId: crypto.randomUUID(),
-      },
-    ]);
+    setCart((prev) => {
+      const existingItem = prev.find(
+        (item) =>
+          item.id === menu.id &&
+          item.temperature === option.temperature &&
+          item.sweet === option.sweet
+      );
 
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 1200);
+      if (existingItem) {
+        return prev.map((item) =>
+          item.id === menu.id &&
+          item.temperature === option.temperature &&
+          item.sweet === option.sweet
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          ...menu,
+          temperature: option.temperature,
+          sweet: option.sweet,
+          quantity: 1,
+        },
+      ];
+    });
   };
 
-  const removeFromCart = (cartId) => {
-    setCart((prev) => prev.filter((item) => item.cartId !== cartId));
+  const increaseQuantity = (cartIndex) => {
+    setCart((prev) =>
+      prev.map((item, index) =>
+        index === cartIndex ? { ...item, quantity: item.quantity + 1 } : item
+      )
+    );
   };
 
-  const totalPrice = useMemo(() => {
-    return cart.reduce((sum, item) => sum + item.price, 0);
-  }, [cart]);
+  const decreaseQuantity = (cartIndex) => {
+    setCart((prev) =>
+      prev
+        .map((item, index) =>
+          index === cartIndex ? { ...item, quantity: item.quantity - 1 } : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const removeItem = (cartIndex) => {
+    setCart((prev) => prev.filter((_, index) => index !== cartIndex));
+  };
 
   const createLineMessage = (orderNumber) => {
-    const orderList = cart
-      .map(
-        (item, index) =>
-          `${index + 1}. ${item.name} - ${item.price}฿\n   ${item.temperature} / ความหวาน: ${item.sweetness}`
-      )
+    const itemsText = cart
+      .map((item, index) => {
+        const itemTotal = item.price * item.quantity;
+
+        return `${index + 1}. ${item.name}
+   • ${item.temperature}
+   • ความหวาน: ${item.sweet}
+   • จำนวน: ${item.quantity}
+   • ราคา: ${itemTotal} บาท`;
+      })
       .join("\n\n");
 
-    return `☕ ออเดอร์ใหม่ ${orderNumber}
+    return `☕ Tui Cafe - New Order
 
+ออเดอร์: ${orderNumber}
 ชื่อลูกค้า: ${customerName}
 
 รายการ:
-${orderList}
+${itemsText}
 
-รวมทั้งหมด: ${totalPrice}฿
+รวมทั้งหมด: ${totalPrice} บาท
 
-หมายเหตุ: ${note || "-"}`;
+หมายเหตุ:
+${note || "-"}`;
+  };
+
+  const openLineApp = (message) => {
+    const encodedMessage = encodeURIComponent(message);
+
+    const lineUrl = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${encodedMessage}`;
+
+    window.open(lineUrl, "_blank");
   };
 
   const submitOrder = async () => {
     if (!customerName.trim()) {
-      setErrorMessage("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
+      setNameError("กรุณากรอกชื่อคุณก่อนส่งออเดอร์");
       return;
     }
 
     if (cart.length === 0) {
-      setErrorMessage("กรุณาเลือกเมนูก่อนส่งออเดอร์");
+      setNameError("กรุณาเลือกเมนูก่อนส่งออเดอร์");
       return;
     }
 
-    setErrorMessage("");
+    setNameError("");
+    setIsSending(true);
 
     try {
       const counterRef = ref(db, "orderCounter");
 
-      const result = await runTransaction(counterRef, (currentValue) => {
+      const counterResult = await runTransaction(counterRef, (currentValue) => {
         return (currentValue || 0) + 1;
       });
 
-     const nextNumber = Number(result.snapshot.val()) || 1;
-     const orderNumber = `#${String(nextNumber).padStart(3, "0")}`;
+      const newOrderNumber = counterResult.snapshot.val();
+      const orderNumberText = formatOrderNumber(newOrderNumber);
 
       const orderData = {
-        orderNumber,
-        customerName,
+        orderNumber: orderNumberText,
+        customerName: customerName.trim(),
         items: cart,
+        totalItems,
         totalPrice,
-        note,
+        note: note.trim(),
         status: "new",
         createdAt: serverTimestamp(),
       };
 
       await push(ref(db, "orders"), orderData);
 
-      setSuccessOrderNumber(orderNumber);
+      const lineMessage = createLineMessage(orderNumberText);
+      openLineApp(lineMessage);
 
-      const message = createLineMessage(orderNumber);
-      const lineUrl = `https://line.me/R/oaMessage/@575kncik/?${encodeURIComponent(message)}`;
-
-      window.open(lineUrl, "_blank");
-
-      setCart([]);
-      setNote("");
       setCustomerName("");
+      setNote("");
+      setCart([]);
     } catch (error) {
-      console.error(error);
-      setErrorMessage("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+      console.error("Submit order error:", error);
+      setNameError("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsSending(false);
     }
   };
 
   return (
     <div className="app">
-        <button className="floating-cart">
-  🛒 <span>{cart.length}</span>
-      </button>
-      
-      {showToast && <div className="toast">เพิ่มลงตะกร้าแล้ว +1</div>}
+      {totalItems > 0 && (
+        <div className="floating-cart-badge">
+          🛒 {totalItems}
+        </div>
+      )}
 
       <header className="hero">
         <div>
-          <p className="eyebrow">Fresh Coffee</p>
+          <p className="eyebrow">Fresh coffee for you</p>
           <h1>Tui Cafe</h1>
-          <p className="hero-text">เลือกกาแฟที่คุณชอบ แล้วส่งออเดอร์ให้ร้านได้ทันที</p>
+          <p className="hero-text">
+            เลือกเมนู ใส่รายละเอียด แล้วส่งออเดอร์เข้าร้านได้ทันที
+          </p>
         </div>
-
-     
       </header>
 
-      <section className="customer-box">
-        <label>ชื่อลูกค้า</label>
-        <input
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="กรอกชื่อของคุณ"
-        />
+      <main className="main-layout">
+        <section className="menu-section">
+          <h2>เมนูกาแฟ</h2>
 
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
-        {successOrderNumber && (
-          <p className="success-message">ส่งออเดอร์สำเร็จ {successOrderNumber}</p>
-        )}
-      </section>
+          <div className="menu-grid">
+            {menuItems.map((menu) => (
+              <article className="menu-card" key={menu.id}>
+                <img src={menu.image} alt={menu.name} />
 
-      <main className="menu-grid">
-        {menuItems.map((item) => {
-          const option = getMenuOption(item.id);
-
-          return (
-            <article className="menu-card" key={item.id}>
-              <img src={item.image} alt={item.name} className="menu-image" />
-
-              <div className="menu-content">
-                <div className="menu-title-row">
-                  <div>
-                    <h2>{item.name}</h2>
-                    <p className="price">{item.price} ฿</p>
+                <div className="menu-content">
+                  <div className="menu-title-row">
+                    <h3>{menu.name}</h3>
+                    <span>{menu.price}฿</span>
                   </div>
+
+                  <div className="option-group">
+                    <p>เลือกแบบ</p>
+                    <div className="option-buttons">
+                      {temperatureOptions.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={
+                            selectedOptions[menu.id].temperature === option
+                              ? "option-btn active"
+                              : "option-btn"
+                          }
+                          onClick={() =>
+                            updateOption(menu.id, "temperature", option)
+                          }
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="option-group">
+                    <p>ความหวาน</p>
+                    <div className="option-buttons">
+                      {sweetOptions.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={
+                            selectedOptions[menu.id].sweet === option
+                              ? "option-btn active"
+                              : "option-btn"
+                          }
+                          onClick={() => updateOption(menu.id, "sweet", option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="add-btn"
+                    onClick={() => addToCart(menu)}
+                  >
+                    + เพิ่มลงตะกร้า
+                  </button>
                 </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-                <div className="menu-options">
-                  <p className="option-label">เลือกแบบ</p>
-                  <div className="option-row">
-                    {["เย็น", "ร้อน"].map((temp) => (
-                      <button
-                        key={temp}
-                        type="button"
-                        className={
-                          option.temperature === temp ? "option-pill active" : "option-pill"
-                        }
-                        onClick={() => updateMenuOption(item.id, "temperature", temp)}
-                      >
-                        {temp}
-                      </button>
-                    ))}
-                  </div>
+        <aside className="order-panel">
+          <h2>ออเดอร์ของคุณ</h2>
 
-                  <p className="option-label">ความหวาน</p>
-                  <div className="option-row">
-                    {["ปกติ", "หวานน้อย", "ไม่หวาน"].map((sweet) => (
-                      <button
-                        key={sweet}
-                        type="button"
-                        className={
-                          option.sweetness === sweet ? "option-pill active" : "option-pill"
-                        }
-                        onClick={() => updateMenuOption(item.id, "sweetness", sweet)}
-                      >
-                        {sweet}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+       
 
-                <button className="add-btn" onClick={() => addToCart(item)}>
-                  เพิ่มลงตะกร้า
-                </button>
-              </div>
-            </article>
-          );
-        })}
-      </main>
+          {nameError && <div className="form-error">{nameError}</div>}
 
-      <section className="cart-panel">
-        <h2>ออเดอร์ของคุณ</h2>
-
-        {cart.length === 0 ? (
-          <p className="empty-cart">ยังไม่มีสินค้าในตะกร้า</p>
-        ) : (
-          <>
-            <div className="cart-list">
-              {cart.map((item) => (
-                <div className="cart-item" key={item.cartId}>
+          <div className="cart-list">
+            {cart.length === 0 ? (
+              <p className="empty-cart">ยังไม่มีสินค้าในตะกร้า</p>
+            ) : (
+              cart.map((item, index) => (
+                <div className="cart-item" key={`${item.id}-${index}`}>
                   <div>
                     <strong>{item.name}</strong>
                     <p>
-                      {item.temperature} / ความหวาน: {item.sweetness}
+                      {item.temperature} / {item.sweet}
                     </p>
-                    <span>{item.price} ฿</span>
+                    <p>{item.price * item.quantity}฿</p>
                   </div>
 
-                  <button onClick={() => removeFromCart(item.cartId)}>ลบ</button>
+                  <div className="qty-controls">
+                    <button onClick={() => decreaseQuantity(index)}>-</button>
+                    <span>{item.quantity}</span>
+                    <button onClick={() => increaseQuantity(index)}>+</button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => removeItem(index)}
+                  >
+                    ลบ
+                  </button>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
+          </div>
 
-            <div className="note-box">
-              <label>หมายเหตุ</label>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="เช่น ไม่ใส่น้ำแข็งเยอะ / ขอแก้วแยก"
-              />
-            </div>
+          <label>
+            หมายเหตุ
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="เช่น ไม่ใส่น้ำแข็งเยอะ"
+            />
+          </label>
 
-            <div className="total-row">
-              <span>รวมทั้งหมด</span>
-              <strong>{totalPrice} ฿</strong>
-            </div>
-
-            <button className="submit-btn" onClick={submitOrder}>
-              ส่งออเดอร์ให้ร้าน
-            </button>
-          </>
-        )}
-      </section>
+          <div className="total-row">
+            <span>รวมทั้งหมด</span>
+            <strong>{totalPrice}฿</strong>
+          </div>
+             <label>
+             <p className="form-error">
+  กรุณากรอกชื่อลูกค้าก่อนส่งออเดอร์
+</p>
+            ชื่อลูกค้า
+            <input
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="กรอกชื่อของคุณ"
+            />
+          </label>
+          <button
+            type="button"
+            className="send-btn"
+            onClick={submitOrder}
+            disabled={isSending}
+          >
+            {isSending ? "กำลังส่งออเดอร์..." : "ส่งออเดอร์ให้ร้าน + เปิด LINE"}
+          </button>
+        </aside>
+      </main>
     </div>
   );
 }

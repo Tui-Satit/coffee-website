@@ -297,7 +297,12 @@ function Monitor() {
 
                       <div className="order-subline">
                         <span>เวลา: {formatOrderTime(order.createdAt)}</span>
-                        <span>ออเดอร์ {order.orderNumber || `#${order.id?.slice(-3)}`}</span>
+                       <span>
+  ออเดอร์ #
+  {typeof order.orderNumber === "object"
+    ? order.orderNumber?.number || order.id?.slice(-3)
+    : order.orderNumber || order.id?.slice(-3)}
+</span>
                       </div>
                     </div>
 

@@ -180,12 +180,14 @@ ${note || "-"}`;
 
       await push(ref(db, "orders"), orderData);
 
-      const lineMessage = createLineMessage(orderNumberText);
-      openLineApp(lineMessage);
+     const lineMessage = createLineMessage(orderNumberText);
+openLineApp(lineMessage);
 
-      setCustomerName("");
-      setNote("");
-      setCart([]);
+setTimeout(() => {
+  setCustomerName("");
+  setNote("");
+  setCart([]);
+}, 500);
     } catch (error) {
       console.error("Submit order error:", error);
       setNameError("ส่งออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");

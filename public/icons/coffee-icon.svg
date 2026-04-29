@@ -1,0 +1,16 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Minimal coffee cup icon">
+  <rect width="48" height="48" fill="white" fill-opacity="0"/>
+
+  <!-- Steam -->
+  <path d="M18 14C18 12.9 19 12.1 19.8 11.4C20.7 10.6 21.5 9.8 21.5 8.5" stroke="#C7A17A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 14C24 12.9 25 12.1 25.8 11.4C26.7 10.6 27.5 9.8 27.5 8.5" stroke="#C7A17A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Cup body -->
+  <path d="M13 18H33V27C33 30.9 29.9 34 26 34H20C16.1 34 13 30.9 13 27V18Z" stroke="#2E2E2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Handle -->
+  <path d="M33 21H35.5C37.4 21 39 22.6 39 24.5C39 26.4 37.4 28 35.5 28H33" stroke="#2E2E2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Accent line -->
+  <path d="M16.5 23.5H29.5" stroke="#C7A17A" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

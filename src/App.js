@@ -337,7 +337,7 @@ setTimeout(() => {
             <strong>{totalPrice}฿</strong>
           </div>
              <label>
-             <p className="form-error">
+             <p>
   กรุณากรอกชื่อลูกค้าก่อนส่งออเดอร์
 </p>
             ชื่อลูกค้า

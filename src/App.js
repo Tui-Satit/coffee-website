@@ -244,14 +244,14 @@ return (
     className={temperature === "เย็น" ? "active" : ""}
     onClick={() => setTemperature("เย็น")}
   >
-    Iced 🧊
+    เย็น 🧊
   </button>
   <button
     type="button"
     className={temperature === "ร้อน" ? "active" : ""}
     onClick={() => setTemperature("ร้อน")}
   >
-    Hot ☕
+    ร้อน ☕
   </button>
 </div>
         </div>
@@ -318,7 +318,7 @@ return (
                 <div>
   <h3>{item.name}</h3>
   <p>
-    {item.temperature === "ร้อน" ? "☕ ร้อน" : "🧊 เย็น"} · {item.sweetness} · {item.price} ฿
+    {item.temperature === "เย็น" ? "🧊 เย็น" : "☕ ร้อน"} · {item.sweetness} · {item.price} ฿
   </p>
 </div>
 

@@ -11,13 +11,13 @@ const menuItems = [
   { id: "mocha", name: "Mocha", price: 70, image: "/images/mocha.jpg" },
 ];
 
-const sweetOptions = ["Normal", "Sweetless", "No sugar"];
+const sweetOptions = ["ปกติ", "หวานน้อย", "ไม่หวาน"];
 const LINE_OA_LINK = "https://line.me/R/ti/p/@575kncik";
 
 function App() {
   const [customerName, setCustomerName] = useState("");
-  const [selectedSweet, setSelectedSweet] = useState("Normal");
-  const [temperature, setTemperature] = useState("Iced");
+  const [selectedSweet, setSelectedSweet] = useState("ปกติ");
+  const [temperature, setTemperature] = useState("เย็น");
   const [cart, setCart] = useState([]);
   const [note, setNote] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -201,10 +201,10 @@ function App() {
         <div className="option-group">
           <p className="option-title">ประเภทเครื่องดื่ม</p>
           <div className="option-buttons">
-            <button type="button" className={temperature === "Iced" ? "active" : ""} onClick={() => setTemperature("Iced")}>
+            <button type="button" className={temperature === "เย็น" ? "active" : ""} onClick={() => setTemperature("เย็น")}>
               Iced 🧊
             </button>
-            <button type="button" className={temperature === "Hot" ? "active" : ""} onClick={() => setTemperature("Hot")}>
+            <button type="button" className={temperature === "ร้อน" ? "active" : ""} onClick={() => setTemperature("ร้อน")}>
               Hot ☕
             </button>
           </div>
@@ -262,7 +262,7 @@ function App() {
                 <div>
                   <h3>{item.name}</h3>
                   <p>
-                    {item.temperature === "Hot" ? "☕ Hot" : "🧊 Iced"} · {item.sweetness} · {item.price} ฿
+                    {item.temperature === "เย็น" ? "☕ ร้อน" : "🧊 เย็น"} · {item.sweetness} · {item.price} ฿
                   </p>
                 </div>
 
@@ -278,9 +278,8 @@ function App() {
 
         <label htmlFor="note">หมายเหตุ</label>
         <textarea id="note" placeholder="เช่น ไม่ใส่น้ำแข็ง / แยกน้ำ" value={note} onChange={(event) => setNote(event.target.value)} />
-
+         {!customerName.trim() && <p className="name-warning">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}
         <label htmlFor="customerName">ชื่อลูกค้า</label>
-        {!customerName.trim() && <p className="name-warning">กรุณากรอกชื่อคุณก่อนส่งออเดอร์</p>}
         <input
           id="customerName"
           type="text"

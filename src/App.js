@@ -137,7 +137,7 @@ ${note || "-"}`;
 
   const openLineApp = (message) => {
   const encodedMessage = encodeURIComponent(message);
-  const lineUrl = `https://line.me/R/msg/text/?${encodedMessage}`;
+  const lineUrl = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${encodedMessage}`;
 
   window.location.href = lineUrl;
 };

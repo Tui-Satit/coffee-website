@@ -365,7 +365,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 900;
   box-shadow: 0 18px 40px rgba(46, 27, 18, 0.32);
   animation: floatBadge 2s ease-in-out infinite;

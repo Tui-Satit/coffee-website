@@ -177,6 +177,13 @@ function Monitor() {
     return Number(order.total || order.totalPrice || 0);
   };
 
+  const getOrderNumber = (order) => {
+  if (typeof order.orderNumber === "number") return order.orderNumber;
+  if (typeof order.orderNumber === "string") return order.orderNumber;
+  if (order.orderNumber?.number) return order.orderNumber.number;
+  return order.id?.slice(-3) || "-";
+};
+
  
 
   const formatOrderTime = (createdAt) => {
@@ -297,11 +304,8 @@ function Monitor() {
 
                       <div className="order-subline">
                         <span>เวลา: {formatOrderTime(order.createdAt)}</span>
-                       <span>
-  ออเดอร์ #
-  {typeof order.orderNumber === "object"
-    ? order.orderNumber?.number || order.id?.slice(-3)
-    : order.orderNumber || order.id?.slice(-3)}
+                     <span>
+  ออเดอร์ #{String(getOrderNumber(order)).padStart(3, "0")}
 </span>
                       </div>
                     </div>

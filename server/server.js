@@ -6,6 +6,7 @@ const axios = require("axios");
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3002;
 
 app.use(
   cors({
@@ -16,251 +17,89 @@ app.use(
 );
 app.use(express.json());
 
-const PORT = process.env.PORT || 3002;
-const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-
-// =============================
-// HEALTH CHECK
-// =============================
 app.get("/", (req, res) => {
-  res.send("LINE order server is running 🚀");
+  res.send("Coffee order API is running");
 });
 
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
-// =============================
-// SEND ORDER TO LINE (FLEX)
-// =============================
-app.post("/api/line/push-order", async (req, res) => {
-  try {
-    console.log("📥 Incoming order:", req.body);
+const buildOrderLineText = ({ orderNumber, customerName, items, totalPrice }) => {
+  const itemLines = items
+    .map((item, index) => {
+      const tempThai = item.temperature === "Hot" ? "ร้อน" : "เย็น";
+      const sweetThai = item.sweetness === "No sugar" ? "ไม่หวาน" : item.sweetness === "Sweetless" ? "หวานน้อย" : "ปกติ";
+      const lineTotal = Number(item.price || 0) * Number(item.qty || 0);
 
-    if (!LINE_CHANNEL_ACCESS_TOKEN) {
-      return res.status(500).json({
-        success: false,
-        error: "Missing LINE_CHANNEL_ACCESS_TOKEN",
-      });
-    }
+      return `${index + 1}. ${item.name} ${tempThai} ${sweetThai} x${item.qty} = ${lineTotal} บาท`;
+    })
+    .join("\n");
 
-    const {
-      orderId,
-      customerName,
-      items,
-      totalItems,
-      totalPrice,
-      note,
-      pickupTime,
-      createdAt,
-    } = req.body;
+  return `☕ ออเดอร์ใหม่ ${orderNumber}\n👤 ลูกค้า: ${customerName}\n\nรายการ:\n${itemLines}\n\nรวมทั้งหมด: ${totalPrice} บาท`;
+};
 
-    if (!items || !items.length) {
-      return res.status(400).json({
-        success: false,
-        error: "No items",
-      });
-    }
+app.post("/send-order", async (req, res) => {
+  const { orderNumber, customerName, items, totalPrice } = req.body || {};
 
-    const getTemp = (t) => {
-      if (t === "Hot") return "🔥 ร้อน";
-      if (t === "Cold") return "❄️ เย็น";
-      return t || "❄️ เย็น";
-    };
+  console.log("📥 /send-order payload:", {
+    orderNumber,
+    customerName,
+    totalPrice,
+    itemCount: Array.isArray(items) ? items.length : 0,
+  });
 
-    const createdAtText = createdAt
-      ? new Date(createdAt).toLocaleString("th-TH")
-      : "-";
-
-    // =============================
-    // BUILD ITEM LIST
-    // =============================
-    const itemRows = items.flatMap((item) => {
-      const total = item.price * item.qty;
-
-      return [
-        {
-          type: "box",
-          layout: "vertical",
-          contents: [
-            {
-              type: "text",
-              text: item.name,
-              weight: "bold",
-              size: "sm",
-            },
-            {
-              type: "text",
-              text: `${getTemp(item.temperature)} • ${item.sugar} • x${item.qty}`,
-              size: "xs",
-              color: "#666666",
-            },
-            {
-              type: "text",
-              text: `฿${total}`,
-              size: "sm",
-              color: "#06C755",
-              weight: "bold",
-            },
-          ],
-        },
-        { type: "separator", margin: "md" },
-      ];
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    return res.status(500).json({
+      ok: false,
+      error: "Missing LINE_CHANNEL_ACCESS_TOKEN in environment variables",
     });
+  }
 
-    if (itemRows[itemRows.length - 1]?.type === "separator") {
-      itemRows.pop();
-    }
+  if (!process.env.LINE_USER_ID) {
+    return res.status(500).json({
+      ok: false,
+      error: "Missing LINE_USER_ID in environment variables",
+    });
+  }
 
-    // =============================
-    // FLEX MESSAGE
-    // =============================
-    const flexMessage = {
-      type: "flex",
-      altText: `ออเดอร์ใหม่ ${customerName} ฿${totalPrice}`,
-      contents: {
-        type: "bubble",
-        size: "giga",
-        header: {
-          type: "box",
-          layout: "vertical",
-          backgroundColor: "#D32F2F",
-          contents: [
-            {
-              type: "text",
-              text: "🚨 ออเดอร์ใหม่!",
-              color: "#FFFFFF",
-              size: "lg",
-              weight: "bold",
-            },
-            {
-              type: "text",
-              text: `Order ID: ${orderId}`,
-              color: "#FFEBEE",
-              size: "xs",
-            },
-          ],
-        },
-        body: {
-          type: "box",
-          layout: "vertical",
-          spacing: "md",
-          contents: [
-            {
-              type: "text",
-              text: `👤 ${customerName}`,
-              size: "sm",
-            },
-            {
-              type: "text",
-              text: `📍 ${pickupTime || "รับที่ร้าน"}`,
-              size: "sm",
-            },
-            {
-              type: "text",
-              text: `🕒 ${createdAtText}`,
-              size: "xs",
-              color: "#666666",
-            },
+  if (!orderNumber || !customerName || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({
+      ok: false,
+      error: "Invalid request body: orderNumber, customerName, and items are required",
+    });
+  }
 
-            { type: "separator" },
+  const message = buildOrderLineText({ orderNumber, customerName, items, totalPrice });
 
-            {
-              type: "text",
-              text: "☕ รายการสั่ง",
-              weight: "bold",
-            },
-
-            ...itemRows,
-
-            { type: "separator" },
-
-            {
-              type: "box",
-              layout: "horizontal",
-              contents: [
-                { type: "text", text: "จำนวน", size: "sm" },
-                {
-                  type: "text",
-                  text: `${totalItems} แก้ว`,
-                  align: "end",
-                  weight: "bold",
-                },
-              ],
-            },
-            {
-              type: "box",
-              layout: "horizontal",
-              contents: [
-                { type: "text", text: "ยอดรวม", size: "sm" },
-                {
-                  type: "text",
-                  text: `฿${totalPrice}`,
-                  align: "end",
-                  weight: "bold",
-                  color: "#06C755",
-                },
-              ],
-            },
-
-            {
-              type: "text",
-              text: `📝 ${note || "-"}`,
-              size: "xs",
-              wrap: true,
-              margin: "md",
-            },
-          ],
-        },
-        footer: {
-          type: "box",
-          layout: "vertical",
-          contents: [
-            {
-              type: "button",
-              style: "primary",
-              color: "#06C755",
-              action: {
-                type: "uri",
-                label: "เปิด Monitor",
-                uri: "http://192.168.1.43:3000/monitor",
-              },
-            },
-          ],
-        },
-      },
-    };
-
-    // =============================
-    // SEND TO LINE
-    // =============================
-    const response = await axios.post(
-      "https://api.line.me/v2/bot/message/broadcast",
+  try {
+    const lineResponse = await axios.post(
+      "https://api.line.me/v2/bot/message/push",
       {
-        messages: [flexMessage],
+        to: process.env.LINE_USER_ID,
+        messages: [{ type: "text", text: message }],
       },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
         },
       }
     );
 
-    console.log("✅ LINE sent:", response.status);
-
-    res.json({ success: true });
+    console.log("✅ LINE push sent", { status: lineResponse.status });
+    return res.json({ ok: true });
   } catch (error) {
-    console.error("❌ LINE error:", error.response?.data || error.message);
-
-    res.status(500).json({
-      success: false,
-      error: error.response?.data || error.message,
+    const detail = error.response?.data || error.message;
+    console.error("❌ LINE API failed", detail);
+    return res.status(500).json({
+      ok: false,
+      error: "LINE API request failed",
+      detail,
     });
   }
 });
 
-// =============================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
